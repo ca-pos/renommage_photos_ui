@@ -2,7 +2,7 @@ from pathlib import Path
 import string
 import pyexiv2
 
-class PhotoExif():
+class PhotoExif:
     """
     PhotoExif object contains the exif informations necessary for the present program and a compressed version of the original date
 

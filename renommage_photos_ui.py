@@ -1,3 +1,4 @@
+import string
 import sys
 import os
 from os.path import abspath
@@ -41,16 +42,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.op_group.addButton(self.rb_correct)
         self.op_group.setId(self.rb_correct, CORRECT_ID)
 
-        # Initial status of the buttons
-        # at start, EXEC and GALLERY buttons are disabled
-        self.btn_exec.setEnabled(False)  # ----> uncomment
-        self.btn_gallery.setEnabled(False)
+        # initialize date suffix combobox
+        self.cbx_date_suffix.addItem('')
+        for suffix in range(0, 26):
+            self.cbx_date_suffix.addItem(string.ascii_lowercase[suffix])
 
         # connect the buttons
         self.btn_select.clicked.connect(self.open_dir)
         self.btn_gallery.clicked.connect(self.show_gallery)
         self.btn_exec.clicked.connect(self.execute)
         self.btn_quit.clicked.connect(self.close)
+        self.btn_clear_output.clicked.connect(self.clear_console_output)
+
+        self.activate_buttons(False) # at start, no action allowed
 
     def import_card(self):
         print('Import')
@@ -77,15 +81,34 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def rename_pictures(self):
         print('Rename')
-        # enable old and new name area, and group name edit
-        self.lbl_old_name.setEnabled(True)
-        self.lbl_new_name.setEnabled(True)
-        self.edt_gname.setEnabled(True)
 
         group_name = self.edt_gname.text()
         if not group_name:
-            print('Avant de presser Exécuter, entrez un nom pour le groupe')
-            return 
+            # ----> replace with a QMessage (?)
+            self.console.addItems([MSG_GROUP_NAME_MISSING])
+            self.console.scrollToBottom()
+            return
+
+        # these parts are the same for all pictures, taken from the first one
+        #   target directory : STEP1 / decade / parent folder
+        #   where parent folder = compressed date + '-' + group name
+        photo = PhotoExif(self.pictures_list[0])
+        photo_date = photo.date
+        decade = photo_date[0:4]
+        date = '(' + photo_date.replace(' ', '-') + ')_'
+        compressed_date = ''.join(photo.compressed_date[1:3]) + self.cbx_date_suffix.currentText()
+        parent_folder = compressed_date + '-' + group_name
+        ext = photo.original_suffix
+        directory = STEP_1 + decade + '/' + parent_folder
+        print(date +  '___' + parent_folder + ext)
+
+        rank = 1
+        for picture in self.pictures_list:
+            photo = PhotoExif(picture)
+            rank_str = str("{:03d}".format(rank)) + '_'
+            camera_name = '['+photo.original_name+']_'
+            print(directory + '/' + date + rank_str + camera_name + group_name + ext)
+            rank += 1
 
 
     def correct_names(self):
@@ -109,24 +132,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         file_dialog.setViewMode(QFileDialog.ViewMode.List)
 
         # clear the display lst_files
-        self.lst_files.clear()
+        self.console.clear()
 
         if file_dialog.exec():
             selected_directory = file_dialog.selectedFiles()[0]
             os.chdir(selected_directory)  # go in the selected dir
             self.current_folder = abspath(selected_directory)
-            self.lst_files.insertItem(0, 'Contenu du répertoire : ' + self.current_folder) # and display it
+            self.console.addItem( 'Contenu du répertoire : ' + self.current_folder) # and display it
         else:   # cancel button was pressed by user
             return
         # display the content of the folder in lst_files display and save it in file_list
-        rank = 1
         file_list = list()
         for file in os.listdir('.'):
             if not os.path.isdir(file):
-                rank_str = str("{:03d}".format(rank)) + ': '
-                self.lst_files.insertItem(rank, rank_str + file)
                 file_list.append(file)
-                rank += 1
+        file_list.sort()
+        rank = 1
+        for file in file_list:
+            rank_str = str("{:03d}".format(rank)) + ':  '
+            self.console.addItem( rank_str+file)
+            rank += 1
+
         self.create_pictures_list(file_list)
 
         # ask confirmation
@@ -134,15 +160,28 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         dlg.setWindowTitle('Choisir le répertoire')
 
         if dlg.exec() and self.pictures_list: # ok, enable exec & gallery buttons
-            self.btn_exec.setEnabled(True)
-            self.btn_gallery.setEnabled(True)
+            self.activate_buttons(True)
             return
         # not ok (wrong folder or no image file), clear lst_files display et truncate file_list
+        self.console.clear()
         if not self.pictures_list:
+            self.console.insertItem( 0, MSG_NO_PICTURE)
             print('Pas de fichers NEF/JPG')     # replace with a QMessage
         # clear display and list
-        self.lst_files.clear()
         self.pictures_list = []
+
+    @Slot()
+    def clear_console_output(self):
+        self.console.clear()
+
+    def activate_buttons(self, flag):
+        # Initial status of the buttons
+        # at start, task, EXEC and GALLERY buttons are disabled
+        self.btn_exec.setEnabled(flag)
+        self.btn_gallery.setEnabled(flag)
+        self.rb_initial_sort.setEnabled(flag)
+        self.rb_rename.setEnabled(flag)
+        self.rb_correct.setEnabled(flag)
 
     def create_pictures_list(self, p_list):
         # find picture files using filters
@@ -154,7 +193,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if not bool(filters[index].match(file)):  # filter
                 continue
             self.pictures_list.append(file) # store
-        self.pictures_list.sort()           # and sort the list
+        self.pictures_list.sort()   # and sort the list
 
 
 class AcceptDialog(QDialog):

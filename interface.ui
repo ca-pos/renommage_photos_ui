@@ -589,7 +589,7 @@
      </disabled>
     </palette>
    </property>
-   <layout class="QVBoxLayout" name="verticalLayout_3">
+   <layout class="QVBoxLayout" name="verticalLayout_2">
     <item>
      <layout class="QGridLayout" name="gridLayout">
       <item row="0" column="0">
@@ -752,13 +752,50 @@
      </layout>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
+     <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QLabel" name="lbl_group_name">
-        <property name="text">
-         <string>Nom du groupe de fichiers</string>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QLabel" name="lbl_group_name">
+          <property name="text">
+           <string>Nom du groupe de fichiers</string>
+          </property>
+          <property name="buddy">
+           <cstring>edt_gname</cstring>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Orientation::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>358</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QLabel" name="lbl_date_suffix">
+          <property name="text">
+           <string>Suffixe de date</string>
+          </property>
+          <property name="buddy">
+           <cstring>cbx_date_suffix</cstring>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="cbx_date_suffix">
+          <property name="currentText">
+           <string/>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
        <widget class="QLineEdit" name="edt_gname"/>
@@ -786,6 +823,9 @@
         <property name="text">
          <string>Ancien   </string>
         </property>
+        <property name="buddy">
+         <cstring>txt_old_name</cstring>
+        </property>
        </widget>
       </item>
       <item row="1" column="1" colspan="2">
@@ -799,6 +839,9 @@
        <widget class="QLabel" name="lbl_new_name">
         <property name="text">
          <string>Nouveau</string>
+        </property>
+        <property name="buddy">
+         <cstring>txt_new_name</cstring>
         </property>
        </widget>
       </item>
@@ -819,16 +862,39 @@
      </widget>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout">
-      <item>
+     <layout class="QGridLayout" name="gridLayout_3">
+      <item row="0" column="0">
        <widget class="QLabel" name="lbl_list_of_files">
         <property name="text">
-         <string>Liste des fichiers</string>
+         <string>Console</string>
+        </property>
+        <property name="buddy">
+         <cstring>console</cstring>
         </property>
        </widget>
       </item>
-      <item>
-       <widget class="QListWidget" name="lst_files"/>
+      <item row="0" column="1">
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="0" column="2">
+       <widget class="QPushButton" name="btn_clear_output">
+        <property name="text">
+         <string>Effacer</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" colspan="3">
+       <widget class="QListWidget" name="console"/>
       </item>
      </layout>
     </item>
