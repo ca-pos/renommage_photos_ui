@@ -12,5 +12,6 @@ STEP_1 = '/home/camille/tmp/0. Tri & Renommage/tests_a_jeter/1._import/'    # to
 
 MSG_NO_PICTURE = 'Aucun fichiers correspondants dans ce répertoire'
 MSG_GROUP_NAME_MISSING = '\n===>> Entrez le nom du groupe de photos\n'
+MSG_NO_DATE_SUFFIX = '\nChoisir un suffixe de date\n'
 
 

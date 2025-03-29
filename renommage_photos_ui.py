@@ -33,7 +33,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.type_group.addButton(self.rb_jpg)
         self.type_group.setId(self.rb_jpg, JPG_ID)
         # group tasks (IMPORT, RENAME, CORRECT) radiobutton and set the id's
-        self.rb_initial_sort.setChecked(True) # default IMPORT
         self.op_group = QButtonGroup(self)
         self.op_group.addButton(self.rb_initial_sort)
         self.op_group.setId(self.rb_initial_sort, IMPORT_ID)
@@ -43,7 +42,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.op_group.setId(self.rb_correct, CORRECT_ID)
 
         # initialize date suffix combobox
-        self.cbx_date_suffix.addItem('')
+        self.cbx_date_suffix.setPlaceholderText('Choisir')
+        self.cbx_date_suffix.addItem('Aucun')
+        self.cbx_date_suffix.setCurrentIndex(3)
         for suffix in range(0, 26):
             self.cbx_date_suffix.addItem(string.ascii_lowercase[suffix])
 
@@ -94,22 +95,32 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #   where parent folder = compressed date + '-' + group name
         photo = PhotoExif(self.pictures_list[0])
         photo_date = photo.date
-        decade = photo_date[0:4]
+        photo_compressed_date = photo.compressed_date
+        decade = photo_compressed_date[0]
         date = '(' + photo_date.replace(' ', '-') + ')_'
-        compressed_date = ''.join(photo.compressed_date[1:3]) + self.cbx_date_suffix.currentText()
+        date_suffix = self.cbx_date_suffix.currentText()
+        if date_suffix == '':
+            self.console.addItem(MSG_NO_DATE_SUFFIX)
+            self.console.scrollToBottom()
+            return
+        if date_suffix == 'Aucun':
+            date_suffix = ''
+        compressed_date = ''.join(photo_compressed_date[1:3]) + date_suffix
+        group_name = self.suppress_spaces(group_name).replace(' ', '-').lower()
         parent_folder = compressed_date + '-' + group_name
         ext = photo.original_suffix
         directory = STEP_1 + decade + '/' + parent_folder
-        print(date +  '___' + parent_folder + ext)
+        os.makedirs(directory + '/', exist_ok=True)
 
         rank = 1
         for picture in self.pictures_list:
             photo = PhotoExif(picture)
             rank_str = str("{:03d}".format(rank)) + '_'
             camera_name = '['+photo.original_name+']_'
-            print(directory + '/' + date + rank_str + camera_name + group_name + ext)
             rank += 1
-
+            new_name = date + rank_str + camera_name + group_name + ext
+            self.txt_old_name.setText(directory + '/' + new_name)
+            shutil.copy(picture, directory + '/' + new_name)
 
     def correct_names(self):
         print('Correct')
@@ -195,6 +206,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.pictures_list.append(file) # store
         self.pictures_list.sort()   # and sort the list
 
+    def suppress_spaces(self, string):
+        while string[0] == ' ':  # get rid of leading spaces
+            string = string[1:len(string)]
+
+        while string[len(string) - 1] == ' ':  # get rid of trailing spaces
+            string = string[0:len(string) - 1]
+
+        while string.find('  ') > 0:
+            string = string.replace("  ", " ")  # replace double spaces with single space
+
+        return string
 
 class AcceptDialog(QDialog):
     def __init__(self):
