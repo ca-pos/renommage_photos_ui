@@ -1,9 +1,10 @@
-import string
+#import string
 import sys
 import os
-from os.path import abspath
 import shutil
 import re
+from os.path import abspath
+from functools import partial
 
 from PySide6.QtWidgets import (QApplication, QMainWindow, QFileDialog, QButtonGroup, QDialog, QDialogButtonBox,
                                QHBoxLayout, QVBoxLayout, QLabel, QPushButton)
@@ -18,12 +19,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Renommage des Photos')
-        self.resize(800, 450)
         self.setupUi(self)
 
         # selected (current) folder and its content saved in file_list
         self.pictures_list = list()
         self.current_folder = str()
+        # self.gname_exist = False
 
         # group type of image (NEF or JPG) radiobutton and set the id's
         self.rb_nef.setChecked(True)    # default NEF files
@@ -48,14 +49,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         for suffix in range(0, 26):
             self.cbx_date_suffix.addItem(string.ascii_lowercase[suffix])
 
-        # connect the buttons
-        self.btn_select.clicked.connect(self.open_dir)
-        self.btn_gallery.clicked.connect(self.show_gallery)
-        self.btn_exec.clicked.connect(self.execute)
-        self.btn_quit.clicked.connect(self.close)
-        self.btn_clear_output.clicked.connect(self.clear_console_output)
+        self.activate_all_buttons(False) # at start, no action allowed
 
-        self.activate_buttons(False) # at start, no action allowed
+        # connect the buttons
+        self.btn_select.clicked.connect(self.open_dir)                      # select dir
+        self.btn_gallery.clicked.connect(self.show_gallery)                 # show gallery
+        self.btn_exec.clicked.connect(self.execute)                         # execute chosen task
+        self.btn_quit.clicked.connect(self.close)                           # leave app
+        self.btn_clear_output.clicked.connect(self.clear_console_output)    # clear console
+        self.edt_gname.editingFinished.connect(self.gname_done)             # group name entered
 
     def import_card(self):
         print('Import')
@@ -81,16 +83,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.rb_rename.setChecked(True)
 
     def rename_pictures(self):
-        print('Rename')
-
         group_name = self.edt_gname.text()
-        if not group_name:
-            # ----> replace with a QMessage (?)
-            self.console.addItems([MSG_GROUP_NAME_MISSING])
-            self.console.scrollToBottom()
-            return
 
-        # these parts are the same for all pictures, taken from the first one
+        # these parts which are the same for all pictures are taken from the first one
         #   target directory : STEP1 / decade / parent folder
         #   where parent folder = compressed date + '-' + group name
         photo = PhotoExif(self.pictures_list[0])
@@ -99,10 +94,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         decade = photo_compressed_date[0]
         date = '(' + photo_date.replace(' ', '-') + ')_'
         date_suffix = self.cbx_date_suffix.currentText()
-        if date_suffix == '':
-            self.console.addItem(MSG_NO_DATE_SUFFIX)
-            self.console.scrollToBottom()
-            return
         if date_suffix == 'Aucun':
             date_suffix = ''
         compressed_date = ''.join(photo_compressed_date[1:3]) + date_suffix
@@ -120,10 +111,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             rank += 1
             new_name = date + rank_str + camera_name + group_name + ext
             self.txt_old_name.setText(directory + '/' + new_name)
-            shutil.copy(picture, directory + '/' + new_name)
+            shutil.copy(picture, directory + '/' + new_name)    # ----> replace with move
+
+        self.console.clear()
+        self.console.addItem(MSG_END.upper())
+        self.activate_all_buttons(False)
 
     def correct_names(self):
         print('Correct')
+
+    def generate_new_name_and_directory(self):
+        pass
 
     @Slot()
     def execute(self):
@@ -171,7 +169,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         dlg.setWindowTitle('Choisir le répertoire')
 
         if dlg.exec() and self.pictures_list: # ok, enable exec & gallery buttons
-            self.activate_buttons(True)
+            self.activate_task_buttons(True, False, True)
+            self.activate_exec_gallery_buttons(True)
             return
         # not ok (wrong folder or no image file), clear lst_files display et truncate file_list
         self.console.clear()
@@ -185,14 +184,29 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def clear_console_output(self):
         self.console.clear()
 
-    def activate_buttons(self, flag):
-        # Initial status of the buttons
-        # at start, task, EXEC and GALLERY buttons are disabled
+    @Slot()
+    def gname_done(self):
+        if not self.edt_gname.text():  # enter pressed by itself
+            # ----> replace with a QMessage (?)
+            self.message_in_console(MSG_GROUP_NAME_MISSING)
+            return
+        else:
+            self.activate_task_buttons(True, True, True)
+
+    def activate_exec_gallery_buttons(self, flag):
+        # enable/disable EXEC and GALLERY buttons
         self.btn_exec.setEnabled(flag)
         self.btn_gallery.setEnabled(flag)
-        self.rb_initial_sort.setEnabled(flag)
-        self.rb_rename.setEnabled(flag)
-        self.rb_correct.setEnabled(flag)
+
+    def activate_task_buttons(self, flag_sort, flag_rename, flag_correct):
+        # enable/disable task buttons
+        self.rb_initial_sort.setEnabled(flag_sort)
+        self.rb_rename.setEnabled(flag_rename)
+        self.rb_correct.setEnabled(flag_correct)
+
+    def activate_all_buttons(self, flag):
+        self.activate_task_buttons( flag, flag, flag)
+        self.activate_exec_gallery_buttons(flag)
 
     def create_pictures_list(self, p_list):
         # find picture files using filters
@@ -205,6 +219,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 continue
             self.pictures_list.append(file) # store
         self.pictures_list.sort()   # and sort the list
+
+    def message_in_console(self, message):
+        msg = '\n====> ' + message.upper() +'\n'
+        self.console.addItem(msg)
+        self.console.scrollToBottom()
 
     def suppress_spaces(self, string):
         while string[0] == ' ':  # get rid of leading spaces
