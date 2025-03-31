@@ -3,8 +3,9 @@ import sys
 import os
 import shutil
 import re
+import rawpy
 from os.path import abspath
-from functools import partial
+#from functools import partial
 
 from PySide6.QtWidgets import (QApplication, QMainWindow, QFileDialog, QButtonGroup, QDialog, QDialogButtonBox,
                                QHBoxLayout, QVBoxLayout, QLabel, QPushButton)
@@ -24,8 +25,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # selected (current) folder and its content saved in file_list
         self.pictures_list = list()
         self.current_folder = str()
-        # self.gname_exist = False
-
         # group type of image (NEF or JPG) radiobutton and set the id's
         self.rb_nef.setChecked(True)    # default NEF files
         self.type_group = QButtonGroup(self)
@@ -41,7 +40,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.op_group.setId(self.rb_rename, RENAME_ID)
         self.op_group.addButton(self.rb_correct)
         self.op_group.setId(self.rb_correct, CORRECT_ID)
-
         # initialize date suffix combobox
         self.cbx_date_suffix.setPlaceholderText('Choisir')
         self.cbx_date_suffix.addItem('Aucun')
@@ -49,7 +47,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         for suffix in range(0, 26):
             self.cbx_date_suffix.addItem(string.ascii_lowercase[suffix])
 
-        self.activate_all_buttons(False) # at start, no action allowed
+        self.activate_all_buttons(False) # at start, no action allowed but folder selection (and quit!)
 
         # connect the buttons
         self.btn_select.clicked.connect(self.open_dir)                      # select dir
@@ -58,6 +56,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.btn_quit.clicked.connect(self.close)                           # leave app
         self.btn_clear_output.clicked.connect(self.clear_console_output)    # clear console
         self.edt_gname.editingFinished.connect(self.gname_done)             # group name entered
+        self.rb_nef.toggled.connect(self.nef_toggled)                       # choose which type of picture
+        # by default, NEF are searched
+        self.searched_type = NEF_ID
 
     def import_card(self):
         print('Import')
@@ -129,8 +130,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         [self.import_card, self.rename_pictures, self.correct_names][self.op_group.checkedId()]()
 
     @Slot()
+    def nef_toggled(self):
+        rb = self.sender()
+        self.searched_type = NEF_ID if rb.isChecked() else JPG_ID
+
+    @Slot()
     def show_gallery(self):
         print('Show Gallery')
+        self.create_thumb_jpeg()
         
     @Slot()
     def open_dir(self):
@@ -161,7 +168,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             rank_str = str("{:03d}".format(rank)) + ':  '
             self.console.addItem( rank_str+file)
             rank += 1
-
         self.create_pictures_list(file_list)
 
         # ask confirmation
@@ -173,11 +179,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.activate_exec_gallery_buttons(True)
             return
         # not ok (wrong folder or no image file), clear lst_files display et truncate file_list
-        self.console.clear()
         if not self.pictures_list:
-            self.console.insertItem( 0, MSG_NO_PICTURE)
-            print('Pas de fichers NEF/JPG')     # replace with a QMessage
-        # clear display and list
+            self.message_in_console(MSG_NO_PICTURE + ' (' + str(self.searched_type)+ ')')
+        # clear pictures list
         self.pictures_list = []
 
     @Slot()
@@ -236,6 +240,31 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             string = string.replace("  ", " ")  # replace double spaces with single space
 
         return string
+
+    def create_thumb_jpeg(self):
+        """
+        Summary
+            create_thumb_jpeg: Creates a temporary directory for JPEG embedded in NEF files
+
+        Args:
+            photos_test: list[str]
+                list of the RAW files from which the JPEG is to be extracted
+        """
+        print(os.getcwd())
+        os.makedirs(TMP_DIR, exist_ok=True)
+        if self.searched_type:
+            for i in range(0, len(self.pictures_list)):
+                shutil.copy(self.pictures_list[i], TMP_DIR)
+        return
+            # photo_file = f'./pictures/{photos_test[i]}'
+            # photo_exif = PhotoExif(photo_file)
+            # full_path_for_thumb = TMP_DIR + photo_exif.original_name + '.jpeg'
+            # file_path = './pictures/' + photos_test[i]
+            # with rawpy.imread(file_path) as raw:
+            #     thumb = raw.extract_thumb()
+            # with open(full_path_for_thumb, 'wb') as file:
+            #     file.write(thumb.data)
+
 
 class AcceptDialog(QDialog):
     def __init__(self):

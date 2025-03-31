@@ -10,7 +10,9 @@ CORRECT_ID = 2
 STEP_0 = '/home/camille/tmp/0. Tri & Renommage/tests_a_jeter/0._tri1/'      # to be changed in the final version
 STEP_1 = '/home/camille/tmp/0. Tri & Renommage/tests_a_jeter/1._import/'    # to be changed in the final version
 
-MSG_NO_PICTURE = 'Aucun fichiers correspondants dans ce répertoire'
+TMP_DIR = './tmp'
+
+MSG_NO_PICTURE = 'Aucun fichier correspondant dans ce répertoire'
 MSG_GROUP_NAME_MISSING = "N'entrez pas un nom vide"
 MSG_END = '==== Terminé ===='
 
