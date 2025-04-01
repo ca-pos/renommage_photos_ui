@@ -14,6 +14,8 @@ from PySide6.QtCore import Slot, Qt
 from interface import Ui_MainWindow
 
 from PhotoExif import *
+from CustomClasses import *
+
 from constants import *
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -25,6 +27,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # selected (current) folder and its content saved in file_list
         self.pictures_list = list()
         self.current_folder = str()
+        self.gallery_dialog = GalleryDialog()
         # group type of image (NEF or JPG) radiobutton and set the id's
         self.rb_nef.setChecked(True)    # default NEF files
         self.type_group = QButtonGroup(self)
@@ -138,7 +141,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def show_gallery(self):
         print('Show Gallery')
         self.create_thumb_jpeg()
-        
+
     @Slot()
     def open_dir(self):
         # open the dialog window for folder selection
@@ -255,35 +258,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.searched_type:
             for i in range(0, len(self.pictures_list)):
                 shutil.copy(self.pictures_list[i], TMP_DIR)
-        return
-            # photo_file = f'./pictures/{photos_test[i]}'
-            # photo_exif = PhotoExif(photo_file)
-            # full_path_for_thumb = TMP_DIR + photo_exif.original_name + '.jpeg'
-            # file_path = './pictures/' + photos_test[i]
-            # with rawpy.imread(file_path) as raw:
-            #     thumb = raw.extract_thumb()
-            # with open(full_path_for_thumb, 'wb') as file:
-            #     file.write(thumb.data)
+        else:
+            for i in range(0, len(self.pictures_list)):
+                photo_file = self.pictures_list[i]
+                photo_exif = PhotoExif(photo_file)
+                full_path_for_thumb = TMP_DIR + photo_exif.original_name + '.jpeg'
+                print(full_path_for_thumb)
+                # file_path = './pictures/' + photos_test[i]
+                with rawpy.imread(photo_file) as raw:
+                    thumb = raw.extract_thumb()
+                with open(full_path_for_thumb, 'wb') as file:
+                    file.write(thumb.data)
 
 
-class AcceptDialog(QDialog):
-    def __init__(self):
-        super().__init__()
-
-        self.buttonBox = QDialogButtonBox()
-        self.btn_dir_ok = QPushButton('Oui')
-        self.btn_dir_ok.clicked.connect(self.accept)
-        self.btn_dir_wrong = QPushButton('Non')
-        self.btn_dir_wrong.clicked.connect(self.reject)
-
-        layout_h = QHBoxLayout()
-        layout_h.addWidget(self.btn_dir_wrong)
-        layout_h.addWidget(self.btn_dir_ok)
-        layout_v = QVBoxLayout()
-        message = QLabel('Est-ce le bon répertoire ?')
-        layout_v.addWidget(message)
-        layout_v.addLayout(layout_h)
-        self.setLayout(layout_v)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
