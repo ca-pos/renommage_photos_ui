@@ -9,7 +9,7 @@ from os.path import abspath
 
 from PySide6.QtWidgets import (QApplication, QMainWindow, QFileDialog, QButtonGroup, QDialog, QDialogButtonBox,
                                QHBoxLayout, QVBoxLayout, QLabel, QPushButton)
-from PySide6.QtCore import Slot, Qt
+from PySide6.QtCore import Slot, Qt, QIODevice
 
 from interface import Ui_MainWindow
 
@@ -27,7 +27,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # selected (current) folder and its content saved in file_list
         self.pictures_list = list()
         self.current_folder = str()
-        self.gallery_dialog = GalleryDialog()
+#        self.gallery_dialog = GalleryDialog()
         # group type of image (NEF or JPG) radiobutton and set the id's
         self.rb_nef.setChecked(True)    # default NEF files
         self.type_group = QButtonGroup(self)
@@ -114,7 +114,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             camera_name = '['+photo.original_name+']_'
             rank += 1
             new_name = date + rank_str + camera_name + group_name + ext
-            self.txt_old_name.setText(directory + '/' + new_name)
             shutil.copy(picture, directory + '/' + new_name)    # ----> replace with move
 
         self.console.clear()
@@ -140,7 +139,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     @Slot()
     def show_gallery(self):
         print('Show Gallery')
-        self.create_thumb_jpeg()
+        gdial = GalleryDialog(self.pictures_list)
+        gdial.exec()
 
     @Slot()
     def open_dir(self):
@@ -275,6 +275,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     renameWindow = MainWindow()
+
+    f = QFile("./style.qss")
+    f.open(QIODevice.ReadOnly)
+    app.setStyleSheet(QTextStream(f).readAll())
+
     renameWindow.show()
 
     sys.exit(app.exec())
