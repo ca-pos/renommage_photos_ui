@@ -8,7 +8,7 @@ from functools import partial
 
 from PySide6.QtWidgets import QWidget, QGridLayout, QVBoxLayout, QGroupBox, QLabel, QPushButton, QHBoxLayout
 from PySide6.QtGui import QPixmap, QTransform, QPalette, QKeyEvent, QIcon
-from PySide6.QtCore import Qt, Signal, Slot, QObject, QFile, QTextStream
+from PySide6.QtCore import Qt, Signal, Slot, QObject, QFile, QTextStream, QIODevice
 
 from PySide6.QtWidgets import QScrollArea, QCheckBox, QDialog, QDialogButtonBox
 from PIL import Image, ImageFilter
@@ -40,6 +40,7 @@ class AcceptDialog(QDialog):
 class GalleryDialog(QDialog):
     def __init__(self, pictures):
         super().__init__()
+
         controls = Controls()
         gallery = Gallery(controls, pictures)
         display = Display(gallery)
@@ -52,9 +53,15 @@ class GalleryDialog(QDialog):
 class Display(QScrollArea):
     def __init__(self, gallery) -> None:
         super().__init__()
-        # self.setBackgroundRole(QPalette.Dark)
+
+        f = QFile("./style.qss")
+        print(os.getcwd())
+        f.open(QIODevice.ReadOnly)
+        self.setStyleSheet(QTextStream(f).readAll())
+
+        self.setBackgroundRole(QPalette.Dark)
         self.setStyleSheet('background-color: #303030')
-        #self.setWidget(gallery)
+        self.setWidget(gallery)
         self.setWidgetResizable(True)
 #################################################################################
 class Gallery(QWidget):
@@ -93,13 +100,10 @@ class Gallery(QWidget):
         # create Thumbnails and add to Gallery
         for i_thumb in range(len(fichier_raw)):
             photo_file = fichier_raw[i_thumb]
-            print(os.getcwd(), photo_file) # <---- remove
             th = Thumbnails(photo_file)
-            lbl = QLabel('TOTO')
-            print(type(th), th.rank)
             self.layout.addWidget(th)
             th.set_bg_color(self.assign_bg_color(th.rank))
-            print(th.exif.full_path)
+            print('+++', th.rank, th.exif.full_path) # <--- remove
             # process signals from thumbnails
             th.selected.connect(partial(self.thumb_selected, th.rank))
             th.colored.connect(partial(self.change_group_bg_color, th.rank))

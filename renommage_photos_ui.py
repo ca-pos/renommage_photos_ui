@@ -276,9 +276,6 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     renameWindow = MainWindow()
 
-    f = QFile("./style.qss")
-    f.open(QIODevice.ReadOnly)
-    app.setStyleSheet(QTextStream(f).readAll())
 
     renameWindow.show()
 
