@@ -1,9 +1,9 @@
-import os
-from pathlib import Path
+# import os
+# from pathlib import Path
 
-import pyexiv2
+# import pyexiv2
 import random
-import string
+import re
 from functools import partial
 
 from PySide6.QtWidgets import QWidget, QGridLayout, QVBoxLayout, QGroupBox, QLabel, QPushButton, QHBoxLayout
@@ -16,6 +16,7 @@ from PIL import Image, ImageFilter
 from PhotoExif import *
 
 from constants import *
+# from icons import *
 
 #################################################################################
 class AcceptDialog(QDialog):
@@ -54,8 +55,7 @@ class Display(QScrollArea):
     def __init__(self, gallery) -> None:
         super().__init__()
 
-        f = QFile("./style.qss")
-        print(os.getcwd())
+        f = QFile('~/Programmes/011.(PY)-renommage_photos_ui/renommage_photos_ui/style.qss')
         f.open(QIODevice.ReadOnly)
         self.setStyleSheet(QTextStream(f).readAll())
 
@@ -400,9 +400,10 @@ class Thumbnails(QWidget):
         self.rank = Thumbnails.count    # used in gallery to access this thumbnail
 
         # self._thumbnail_title = ''
-        self.thumbnail_title = self.exif.original_name + '  ('  + self.exif.date.replace(' ', '/') + ')'
+        #self.thumbnail_title = self.exif.original_name + '  ('  + self.exif.date.replace(' ', '/') + ')'
+        on = OriginalName(self.exif.original_name)
         reversed_date = '/'.join(list(reversed(self.exif.date.split(' '))))
-        self.thumbnail_title = self.exif.original_name + '  (' + reversed_date + self.exif.date_suffix + ')'
+        self.thumbnail_title = on.original_name + '  (' + reversed_date + self.exif.date_suffix + ')'
 
         self._label = QLabel(self)
         self._label.setStyleSheet('margin: 0px 0px 5px 0px')
@@ -569,5 +570,27 @@ class Controls(QWidget):
     def _slice(self, event: int):
         self.sliced.emit(True)
 #################################################################################
+class OriginalName:
+    '''Try to find the original name of the file'''
+    def __init__(self, current_name):
+        """
+        :param current_name: name of the file in which the original is to be found
+        """
+        self._original_name = ''
 
+        regex = (r'.*(_DSC\d\d\d\d)\D', r'.*(DSC_\d\d\d\d)\D', r'.*(IMG_\d{4,4})\D')
 
+        for r in regex:
+            on = re.findall(r, current_name)
+            if on:
+                print('on', r)
+                self._original_name = on[0]
+                break
+            else:
+                self._original_name = 'XXX_0000'
+
+    @property
+    def original_name(self):
+        """Essai de retrouver le le nom original du fichier"""
+        return self._original_name
+#################################################################################
