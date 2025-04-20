@@ -63,6 +63,13 @@ class PhotoExif:
         self._date_suffix = suffix
     @property
     def compressed_date(self):
+        """
+        structure of the compressed date, a tuple which comprised:
+            1. the decade
+            2. the year/month/day part (DADD)
+            3. an optional suffix
+        :return: the tuple
+        """
         index = int(self.date[5:7]) - 1
         tmp_date = self.date[3] + string.ascii_uppercase[index] + self.date[-2:]
         self._compressed_date = (str(self.date[0:3])+'0', str(tmp_date), self.date_suffix)
