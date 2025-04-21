@@ -3,8 +3,11 @@ from PySide6.QtCore import QSize
 BKG_COL = '#450A2C'
 TXT_COL = '#FFE333'
 
+NONE_ID = -1
 NEF_ID = 0
 JPG_ID = 1
+ALL_ID = 99
+TYPE_ID = [NEF_ID, JPG_ID]
 IMPORT_ID = 0
 RENAME_ID = 1
 CORRECT_ID = 2

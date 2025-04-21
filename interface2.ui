@@ -589,18 +589,11 @@
      </disabled>
     </palette>
    </property>
-   <layout class="QVBoxLayout" name="verticalLayout_3">
-    <item>
+   <layout class="QGridLayout" name="gridLayout_2">
+    <item row="0" column="0">
      <layout class="QGridLayout" name="gridLayout">
       <item row="0" column="0">
-       <widget class="QLabel" name="lbl_tache">
-        <property name="text">
-         <string>Que faire ?</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QRadioButton" name="rb_initial_sort">
+       <widget class="QPushButton" name="btn_import">
         <property name="text">
          <string>Importer la carte mémoire</string>
         </property>
@@ -612,62 +605,62 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="2" rowspan="3">
+      <item row="0" column="1" rowspan="3">
        <widget class="Line" name="line">
         <property name="orientation">
          <enum>Qt::Orientation::Vertical</enum>
         </property>
        </widget>
       </item>
-      <item row="0" column="3" colspan="2">
+      <item row="0" column="2" colspan="2">
        <widget class="QLabel" name="lbl_type_of_files">
         <property name="text">
          <string>Quels fichiers</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="5">
+      <item row="0" column="4">
        <widget class="QRadioButton" name="rb_nef">
         <property name="text">
          <string>NEF</string>
         </property>
         <property name="checked">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
         <property name="autoExclusive">
          <bool>false</bool>
         </property>
        </widget>
       </item>
-      <item row="0" column="7">
-       <widget class="QPushButton" name="btn_select">
-        <property name="text">
-         <string>Sélectionner un répertoire</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="8">
+      <item row="0" column="5">
        <widget class="QPushButton" name="btn_gallery">
         <property name="text">
          <string>Galerie</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="0" rowspan="2">
-       <spacer name="verticalSpacer">
+      <item row="0" column="6">
+       <spacer name="horizontalSpacer_3">
         <property name="orientation">
-         <enum>Qt::Orientation::Vertical</enum>
+         <enum>Qt::Orientation::Horizontal</enum>
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>20</width>
-          <height>49</height>
+          <width>40</width>
+          <height>20</height>
          </size>
         </property>
        </spacer>
       </item>
-      <item row="1" column="1">
-       <widget class="QRadioButton" name="rb_rename">
+      <item row="0" column="7">
+       <widget class="QPushButton" name="btn_exec">
+        <property name="text">
+         <string>                         Exécuter                      </string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QPushButton" name="btn_rename">
         <property name="text">
          <string>Renommer</string>
         </property>
@@ -679,7 +672,7 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="4" rowspan="2">
+      <item row="1" column="3" rowspan="2">
        <spacer name="verticalSpacer_2">
         <property name="orientation">
          <enum>Qt::Orientation::Vertical</enum>
@@ -692,7 +685,7 @@
         </property>
        </spacer>
       </item>
-      <item row="1" column="5">
+      <item row="1" column="4">
        <widget class="QRadioButton" name="rb_jpg">
         <property name="text">
          <string>JPG/JPEG</string>
@@ -705,7 +698,7 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="6">
+      <item row="1" column="5" colspan="2">
        <spacer name="horizontalSpacer_4">
         <property name="orientation">
          <enum>Qt::Orientation::Horizontal</enum>
@@ -718,15 +711,8 @@
         </property>
        </spacer>
       </item>
-      <item row="1" column="7">
-       <widget class="QPushButton" name="btn_exec">
-        <property name="text">
-         <string>Exécuter</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QRadioButton" name="rb_correct">
+      <item row="2" column="0">
+       <widget class="QPushButton" name="btn_correct">
         <property name="text">
          <string>Corriger</string>
         </property>
@@ -735,100 +721,124 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="7" colspan="2">
+      <item row="2" column="4">
+       <widget class="QRadioButton" name="rb_all">
+        <property name="text">
+         <string>Tout</string>
+        </property>
+        <property name="autoExclusive">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="7">
        <widget class="QPushButton" name="btn_quit">
         <property name="text">
          <string>Quitter</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="0" colspan="9">
-       <widget class="Line" name="line_2">
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-       </widget>
-      </item>
      </layout>
     </item>
-    <item>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
+    <item row="1" column="0">
+     <widget class="Line" name="line_2">
+      <property name="orientation">
+       <enum>Qt::Orientation::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QLabel" name="lbl_group_name">
-        <property name="text">
-         <string>Nom du groupe de fichiers</string>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QLabel" name="lbl_group_name">
+          <property name="text">
+           <string>Nom du groupe de fichiers</string>
+          </property>
+          <property name="buddy">
+           <cstring>edt_gname</cstring>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Orientation::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>358</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QLabel" name="lbl_date_suffix">
+          <property name="text">
+           <string>Suffixe de date</string>
+          </property>
+          <property name="buddy">
+           <cstring>cbx_date_suffix</cstring>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="cbx_date_suffix">
+          <property name="currentText">
+           <string/>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
        <widget class="QLineEdit" name="edt_gname"/>
       </item>
      </layout>
     </item>
-    <item>
-     <widget class="Line" name="line_3">
-      <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <layout class="QGridLayout" name="gridLayout_2">
-      <item row="0" column="0" colspan="3">
-       <widget class="QLabel" name="lbl_old_new_names">
-        <property name="text">
-         <string>Emplacement</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="lbl_old_name">
-        <property name="text">
-         <string>Ancien</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1" colspan="2">
-       <widget class="QLineEdit" name="txt_old_name">
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0" colspan="2">
-       <widget class="QLabel" name="lbl_new_name">
-        <property name="text">
-         <string>Nouveau</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="2">
-       <widget class="QLineEdit" name="txt_new_name">
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item>
+    <item row="3" column="0">
      <widget class="Line" name="line_4">
       <property name="orientation">
        <enum>Qt::Orientation::Horizontal</enum>
       </property>
      </widget>
     </item>
-    <item>
-     <layout class="QVBoxLayout" name="verticalLayout">
-      <item>
+    <item row="4" column="0">
+     <layout class="QGridLayout" name="gridLayout_3">
+      <item row="0" column="0">
        <widget class="QLabel" name="lbl_list_of_files">
         <property name="text">
-         <string>Liste des fichiers</string>
+         <string>Console</string>
+        </property>
+        <property name="buddy">
+         <cstring>console</cstring>
         </property>
        </widget>
       </item>
-      <item>
-       <widget class="QListWidget" name="lst_files"/>
+      <item row="0" column="1">
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="0" column="2">
+       <widget class="QPushButton" name="btn_clear_output">
+        <property name="text">
+         <string>Effacer</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" colspan="3">
+       <widget class="QListWidget" name="console"/>
       </item>
      </layout>
     </item>
