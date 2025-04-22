@@ -4,7 +4,7 @@ import os
 import shutil
 import re
 import rawpy
-from os.path import abspath
+from os.path import abspath, splitext, basename
 #from functools import partial
 
 from PySide6.QtWidgets import (QApplication, QMainWindow, QFileDialog, QButtonGroup, QDialog, QDialogButtonBox,
@@ -28,7 +28,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pictures_list = list()
         self.current_folder = str()
 #        self.gallery_dialog = GalleryDialog()
-        # group type of image (NEF or JPG) radiobutton and set the id's
         self.type_group = QButtonGroup(self)
         self.type_group.addButton(self.rb_nef)
         self.type_group.setId(self.rb_nef, NEF_ID)
@@ -39,14 +38,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.task_buttons_list = [self.rb_nef, self.rb_jpg, self.rb_all]
 
-        # group tasks (IMPORT, RENAME, CORRECT) radiobutton and set the id's
-        # self.op_group = QButtonGroup(self)
-        # self.op_group.addButton(self.rb_initial_sort)
-        # self.op_group.setId(self.rb_initial_sort, IMPORT_ID)
-        # self.op_group.addButton(self.rb_rename)
-        # self.op_group.setId(self.rb_rename, RENAME_ID)
-        # self.op_group.addButton(self.rb_correct)
-        # self.op_group.setId(self.rb_correct, CORRECT_ID)
         # initialize date suffix combobox
         self.cbx_date_suffix.setPlaceholderText('Choisir')
         self.cbx_date_suffix.addItem('Aucun')
@@ -69,10 +60,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     @Slot()
     def prepare_task(self, btn_id):
-        self.open_dir()
+        file_list = self.open_dir()
+        type_list = self.examine_list(file_list)
+        self.set_default_type(type_list)
+        self.message_in_console('vérifier les\ntypes de données')
         if btn_id == IMPORT_ID:
+            print('Import ...')
             # execute the checked task (import, rename, correct)
-            [self.import_card, self.rename_pictures, self.correct_names][btn_id]()
+            # [self.import_card, self.rename_pictures, self.correct_names][btn_id]()
 
     @Slot()
     def nef_toggled(self):
@@ -166,49 +161,45 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         pass
 
     def open_dir(self):
+        """
+        Open directory containing the pictures to process
+        :return: list: list of all the files in the directory, excluding subdirectories
+        """
         # open the dialog window for folder selection
         file_dialog = QFileDialog(self)
         file_dialog.setWindowTitle("Répertoire des photos à renommer")
         file_dialog.setFileMode(QFileDialog.FileMode.Directory)
         file_dialog.setViewMode(QFileDialog.ViewMode.List)
 
-        # clear the display lst_files
-        self.console.clear()
-
         if file_dialog.exec():
             selected_directory = file_dialog.selectedFiles()[0]
-            os.chdir(selected_directory)  # go in the selected dir
-            self.current_folder = abspath(selected_directory)
-            self.console.addItem( 'Contenu du répertoire : ' + self.current_folder) # and display it
+            os.chdir(selected_directory)
+            self.console.addItem( 'Contenu du répertoire : ' + selected_directory) # and display it
         else:   # cancel button was pressed by user
             return
         # display the content of the folder in lst_files display and save it in file_list
         file_list = list()
         for file in os.listdir('.'):
             if not os.path.isdir(file):
-                file_list.append(file)
+                file_list.append(abspath(file))
         file_list.sort()
         rank = 1
         for file in file_list:
             rank_str = str("{:03d}".format(rank)) + ':  '
-            self.console.addItem( rank_str+file)
+            self.console.addItem( rank_str+basename(file))
             rank += 1
-
-        return
 
         # ask confirmation
         dlg = AcceptDialog()
         dlg.setWindowTitle('Choisir le répertoire')
 
-        type_list = self.examine_list(file_list)
+        if not dlg.exec(): # not the right directory, returned list is emptied
+            file_list = []
+
+        return file_list
+
         self.set_default_type(type_list)
 
-        #self.create_pictures_list(file_list)
-        print('---', self.pictures_list)
-
-        if dlg.exec() and self.pictures_list: # ok, enable exec & gallery buttons
-            self.activate_exec_gallery_buttons(True)
-            return
 
         # not ok (wrong folder or no image file), clear lst_files display et truncate file_list
         if not self.pictures_list:
@@ -217,21 +208,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pictures_list = []
 
     def set_default_type(self, type_list):
-        if [type_list[0]]*len(type_list) == type_list: # all values are equal
+        """
+        set 'checked' of 'type buttons' according to the content of the directory: NEF, JPG, BOTH or NONE
+        (note: the un/check job itself is done through the 'self.set_checked_type_buttons' routine)
+        :param type_list: list(bool)
+        :return: None
+        """
+        if [type_list[0]]*len(type_list) == type_list: # all values are equal either True or False
             full_type_list = [False]*(len(self.task_buttons_list)-1)
-            if type_list[0]:
-                full_type_list.append(True)
-            else:
-                full_type_list.append(False)
+            if type_list[0]:    # all True
+                full_type_list.append(True) # 'ALL button' to be checked
+            else:   # all False
+                full_type_list.append(False) # no button to be checked
         else:
-            full_type_list = type_list
-            full_type_list.append(False)
+            full_type_list = type_list  # 'type buttons' are checked according 'type_list'
+            full_type_list.append(False)    # 'ALL button' unchecked
         self.set_checked_type_buttons(full_type_list)
 
     def set_checked_type_buttons(self, full_type_list):
         """
         task buttons are set un/checked according to the value of 'full_type_list'
-        :param full_type_list: list of bool
+        :param full_type_list: list(bool)
         :return: None
         """
         for index in range(len(self.task_buttons_list)):
@@ -256,6 +253,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def message_in_console(self, message):
         msg = '\n====> ' + message.upper() +'\n'
+        self.write_console(msg)
+        return
         self.console.addItem(msg)
         self.console.scrollToBottom()
 
@@ -285,14 +284,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 with open(full_path_for_thumb, 'wb') as file:
                     file.write(thumb.data)
 
-    @staticmethod
-    def examine_list(file_list):
+    def examine_list(self, file_list):
         """
         check the type of pictures in file_list, NEF, JPG, both or none
         :param file_list: list: list of pictures to check
         :return: list(bool): telling the types of files found in 'file_list'
         """
-        type_list = [False, False]  # NEF and JPG
+        type_list = [False]*(len(self.task_buttons_list)-1) # will allow more types in the future
         re_nef = re.compile(r".*\.nef$", re.IGNORECASE)  # nef filter
         re_jpg = re.compile(r".*\.jpe?g$", re.IGNORECASE)  # jpg filter
         filters = (re_nef, re_jpg)
@@ -304,6 +302,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if type_list[0] and all(type_list): #type_list[0] and all others are True
                 return type_list
         return type_list
+
+    def write_console(self, message):
+        carriage_return = '\n'
+        positions = [0]  # start position
+        positions += [i for i in range(len(message)) if message.startswith(carriage_return, i)] # add CR positions
+        positions += [len(message)] # add end of message position
+
+        for i in range(len(positions) - 1):
+            start = positions[i] + 1 if i else positions[i]
+            end = positions[i + 1]
+            self.console.addItem(message[start:end])
+
+        self.console.scrollToBottom()
 
     @staticmethod
     def suppress_spaces(string_):
