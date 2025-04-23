@@ -8,9 +8,15 @@ NEF_ID = 0
 JPG_ID = 1
 ALL_ID = 99
 TYPE_ID = [NEF_ID, JPG_ID]
-IMPORT_ID = 0
-RENAME_ID = 1
-CORRECT_ID = 2
+
+NEF_TXT = 'NEF'
+JPG_TXT = 'JPG/JPEG'
+ALL_TXT = 'Tout'
+
+NO_TASK = -1
+IMPORT_TASK_ID = 0
+RENAME_TASK_ID = 1
+CORRECT_TASK_ID = 2
 
 STEP_0 = '/home/camille/tmp/0. Tri & Renommage/tests_a_jeter/0._tri1/'      # to be changed in the final version
 STEP_1 = '/home/camille/tmp/0. Tri & Renommage/tests_a_jeter/1._import/'    # to be changed in the final version
@@ -18,7 +24,12 @@ STEP_1 = '/home/camille/tmp/0. Tri & Renommage/tests_a_jeter/1._import/'    # to
 TMP_DIR = './tmp/'
 BLURRED = '_blurred'
 
-MSG_NO_PICTURE = 'Aucun fichier correspondant dans ce répertoire'
+MSG_IMPORT_ALL = 'Importation de tous les fichiers images ...'
+MSG_IMPORT_TYPE = 'Importation des fichiers '
+MSG_PRESS_EXECUTE = "Cliquez sur le bouton 'Exécuter' pour effectuer l'importation"
+MSG_SELECT_TYPE_TO_IMPORT = "Sinon, choisir le type d'images à importer puis ...\n"
+MSG_NO_PICTURE = 'Aucun fichier image dans ce répertoire'
+
 MSG_GROUP_NAME_MISSING = "N'entrez pas un nom vide"
 MSG_END = '==== Terminé ===='
 

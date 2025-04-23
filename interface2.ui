@@ -589,165 +589,175 @@
      </disabled>
     </palette>
    </property>
-   <layout class="QGridLayout" name="gridLayout_2">
+   <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0">
-       <widget class="QPushButton" name="btn_import">
-        <property name="text">
-         <string>Importer la carte mémoire</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-        <property name="autoExclusive">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1" rowspan="3">
-       <widget class="Line" name="line">
-        <property name="orientation">
-         <enum>Qt::Orientation::Vertical</enum>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2" colspan="2">
-       <widget class="QLabel" name="lbl_type_of_files">
-        <property name="text">
-         <string>Quels fichiers</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="4">
-       <widget class="QRadioButton" name="rb_nef">
-        <property name="text">
-         <string>NEF</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-        <property name="autoExclusive">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="5">
-       <widget class="QPushButton" name="btn_gallery">
-        <property name="text">
-         <string>Galerie</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="6">
-       <spacer name="horizontalSpacer_3">
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="0" column="7">
-       <widget class="QPushButton" name="btn_exec">
-        <property name="text">
-         <string>                         Exécuter                      </string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QPushButton" name="btn_rename">
-        <property name="text">
-         <string>Renommer</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-        <property name="autoExclusive">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="3" rowspan="2">
-       <spacer name="verticalSpacer_2">
-        <property name="orientation">
-         <enum>Qt::Orientation::Vertical</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>20</width>
-          <height>49</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="1" column="4">
-       <widget class="QRadioButton" name="rb_jpg">
-        <property name="text">
-         <string>JPG/JPEG</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-        <property name="autoExclusive">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="5" colspan="2">
-       <spacer name="horizontalSpacer_4">
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>109</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="2" column="0">
-       <widget class="QPushButton" name="btn_correct">
-        <property name="text">
-         <string>Corriger</string>
-        </property>
-        <property name="autoExclusive">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="4">
-       <widget class="QRadioButton" name="rb_all">
-        <property name="text">
-         <string>Tout</string>
-        </property>
-        <property name="autoExclusive">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="7">
-       <widget class="QPushButton" name="btn_quit">
-        <property name="text">
-         <string>Quitter</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
+     <widget class="QPushButton" name="btn_import">
+      <property name="text">
+       <string>Importer la carte mémoire</string>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <property name="autoExclusive">
+       <bool>false</bool>
+      </property>
+     </widget>
     </item>
-    <item row="1" column="0">
+    <item row="0" column="1" rowspan="4">
+     <widget class="Line" name="line">
+      <property name="orientation">
+       <enum>Qt::Orientation::Vertical</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="2" colspan="2">
+     <widget class="QLabel" name="lbl_type_of_files">
+      <property name="text">
+       <string>Quels fichiers</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="4">
+     <widget class="QRadioButton" name="rb_nef">
+      <property name="text">
+       <string>NEF</string>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <property name="autoExclusive">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="5" rowspan="4">
+     <widget class="Line" name="line_3">
+      <property name="orientation">
+       <enum>Qt::Orientation::Vertical</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="6">
+     <widget class="QPushButton" name="btn_gallery">
+      <property name="text">
+       <string>Galerie</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="7">
+     <spacer name="horizontalSpacer_3">
+      <property name="orientation">
+       <enum>Qt::Orientation::Horizontal</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>146</width>
+        <height>17</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="0" column="8">
+     <widget class="QPushButton" name="btn_exec">
+      <property name="text">
+       <string>                         Exécuter                       </string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0" rowspan="2">
+     <widget class="QPushButton" name="btn_rename">
+      <property name="text">
+       <string>Renommer</string>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <property name="autoExclusive">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="3" rowspan="3">
+     <spacer name="verticalSpacer_2">
+      <property name="orientation">
+       <enum>Qt::Orientation::Vertical</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>53</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="1" column="8" rowspan="2">
+     <widget class="QPushButton" name="btn_reset">
+      <property name="text">
+       <string>  Réinitialiser</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="4">
+     <widget class="QRadioButton" name="rb_jpg">
+      <property name="text">
+       <string>JPG/JPEG</string>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <property name="autoExclusive">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="6" colspan="2">
+     <spacer name="horizontalSpacer_4">
+      <property name="orientation">
+       <enum>Qt::Orientation::Horizontal</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>232</width>
+        <height>17</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="3" column="0">
+     <widget class="QPushButton" name="btn_correct">
+      <property name="text">
+       <string>Corriger</string>
+      </property>
+      <property name="autoExclusive">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="4">
+     <widget class="QRadioButton" name="rb_all">
+      <property name="text">
+       <string>Tout</string>
+      </property>
+      <property name="autoExclusive">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="8">
+     <widget class="QPushButton" name="btn_quit">
+      <property name="text">
+       <string>  Quitter</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0" colspan="9">
      <widget class="Line" name="line_2">
       <property name="orientation">
        <enum>Qt::Orientation::Horizontal</enum>
       </property>
      </widget>
     </item>
-    <item row="2" column="0">
+    <item row="5" column="0" colspan="9">
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout">
@@ -798,46 +808,50 @@
       </item>
      </layout>
     </item>
-    <item row="3" column="0">
+    <item row="6" column="0" colspan="9">
      <widget class="Line" name="line_4">
       <property name="orientation">
        <enum>Qt::Orientation::Horizontal</enum>
       </property>
      </widget>
     </item>
-    <item row="4" column="0">
-     <layout class="QGridLayout" name="gridLayout_3">
-      <item row="0" column="0">
-       <widget class="QLabel" name="lbl_list_of_files">
-        <property name="text">
-         <string>Console</string>
-        </property>
-        <property name="buddy">
-         <cstring>console</cstring>
-        </property>
-       </widget>
+    <item row="7" column="0" colspan="9">
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QLabel" name="lbl_list_of_files">
+          <property name="text">
+           <string>Console</string>
+          </property>
+          <property name="buddy">
+           <cstring>console</cstring>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Orientation::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btn_clear_output">
+          <property name="text">
+           <string>Effacer</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
-      <item row="0" column="1">
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="0" column="2">
-       <widget class="QPushButton" name="btn_clear_output">
-        <property name="text">
-         <string>Effacer</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0" colspan="3">
+      <item>
        <widget class="QListWidget" name="console"/>
       </item>
      </layout>

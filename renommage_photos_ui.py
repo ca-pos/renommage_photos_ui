@@ -23,20 +23,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         super().__init__()
         self.setWindowTitle('Renommage des Photos')
         self.setupUi(self)
-
-        # selected (current) folder and its content saved in file_list
+        # variables
         self.pictures_list = list()
         self.current_folder = str()
-#        self.gallery_dialog = GalleryDialog()
+        self.task_to_do = NO_TASK
+
+        # set rb buttons text
+        self.rb_nef.setText(NEF_TXT)
+        self.rb_jpg.setText(JPG_TXT)
+        self.rb_all.setText(ALL_TXT)
+        # group rb buttons ...
         self.type_group = QButtonGroup(self)
         self.type_group.addButton(self.rb_nef)
-        self.type_group.setId(self.rb_nef, NEF_ID)
         self.type_group.addButton(self.rb_jpg)
-        self.type_group.setId(self.rb_jpg, JPG_ID)
         self.type_group.addButton(self.rb_all)
+        # set rb buttons ID
+        self.type_group.setId(self.rb_nef, NEF_ID)
+        self.type_group.setId(self.rb_jpg, JPG_ID)
         self.type_group.setId(self.rb_all, ALL_ID)
 
-        self.task_buttons_list = [self.rb_nef, self.rb_jpg, self.rb_all]
+        # note: if more types are added, 'rb_all' must remain the last one
+        self.type_radiobuttons_list = [self.rb_nef, self.rb_jpg, self.rb_all]
 
         # initialize date suffix combobox
         self.cbx_date_suffix.setPlaceholderText('Choisir')
@@ -46,32 +53,32 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.cbx_date_suffix.addItem(string.ascii_lowercase[suffix])
 
         # connect buttons
+        # BTN
         self.btn_gallery.clicked.connect(self.show_gallery)                 # show gallery
         self.btn_exec.clicked.connect(self.execute)                         # execute chosen task
         self.btn_quit.clicked.connect(self.close)                           # leave app
         self.btn_clear_output.clicked.connect(self.clear_console_output)    # clear console
+        # BTN tasks
+        self.btn_import.clicked.connect(partial(self.prepare_task, IMPORT_TASK_ID))   # import button        
+        # RB
+        self.rb_nef.clicked.connect(self.type_rb_clicked)                       # choose which type of picture
+        self.rb_jpg.clicked.connect(self.type_rb_clicked)
+        self.rb_all.clicked.connect(self.type_rb_clicked)
+
         self.edt_gname.editingFinished.connect(self.gname_done)             # group name entered
-        self.rb_nef.toggled.connect(self.nef_toggled)                       # choose which type of picture
-
-        self.btn_import.clicked.connect(partial(self.prepare_task, IMPORT_ID))   # import button
-
-        # by default, NEF are searched
-        self.searched_type = ALL_ID
 
     @Slot()
     def prepare_task(self, btn_id):
+        self.task_to_do = btn_id
         file_list = self.open_dir()
-        type_list = self.examine_list(file_list)
-        self.set_default_type(type_list)
-        self.message_in_console('vérifier les\ntypes de données')
-        if btn_id == IMPORT_ID:
-            print('Import ...')
-            # execute the checked task (import, rename, correct)
-            # [self.import_card, self.rename_pictures, self.correct_names][btn_id]()
+        type_list = self.examine_list(file_list)    # find folder content, NEF, JPG, etc.
+        self.set_searched_type(type_list) # set searched type according to folder content
+        self.content_info(type_list)    # display info about directory content
 
     @Slot()
-    def nef_toggled(self):
+    def type_rb_clicked(self):
         rb = self.sender()
+        print(rb.text())
         self.searched_type = NEF_ID if rb.isChecked() else JPG_ID
 
     @Slot()
@@ -88,7 +95,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def gname_done(self):
         if not self.edt_gname.text():  # enter pressed by itself
             # ----> replace with a QMessage (?)
-            self.message_in_console(MSG_GROUP_NAME_MISSING)
+            self.console_warning(MSG_GROUP_NAME_MISSING)
             return
         else:
             self.activate_task_buttons(True, True, True)
@@ -98,7 +105,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         pass
 
     def import_card(self):
-        print('Import')
         rank = 1
         for file in self.pictures_list:
             exif = PhotoExif(file)
@@ -122,7 +128,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def rename_pictures(self):
         group_name = self.edt_gname.text()
-
         # these parts which are the same for all pictures are taken from the first one
         #   target directory : STEP1 / decade / parent folder
         #   where parent folder = compressed date + '-' + group name
@@ -155,7 +160,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.activate_all_buttons(False)
 
     def correct_names(self):
-        print('Correct')
+        pass
+
+    def content_info(self, type_list):
+        if type_list == [False]*len(type_list):
+            self.console_warning(MSG_NO_PICTURE)
+            return
+        if type_list[-1]:
+            self.console_warning(MSG_IMPORT_ALL)
+            self.write_console(MSG_SELECT_TYPE_TO_IMPORT)
+        else:
+            type_ = 'NEF' if type_list[NEF_ID] else 'JPG/JPEG' if type_list[JPG_ID] else None
+            self.console_warning(MSG_IMPORT_TYPE + f'\'{type_}\'')
+        self.write_console(MSG_PRESS_EXECUTE)
 
     def generate_new_name_and_directory(self):
         pass
@@ -198,16 +215,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         return file_list
 
-        self.set_default_type(type_list)
+        # self.set_default_type(type_list)
+        #
+        #
+        # # not ok (wrong folder or no image file), clear lst_files display et truncate file_list
+        # if not self.pictures_list:
+        #     self.console_warning(MSG_NO_PICTURE + ' (' + str(self.searched_type)+ ')')
+        # # clear pictures list
+        # self.pictures_list = []
 
-
-        # not ok (wrong folder or no image file), clear lst_files display et truncate file_list
-        if not self.pictures_list:
-            self.message_in_console(MSG_NO_PICTURE + ' (' + str(self.searched_type)+ ')')
-        # clear pictures list
-        self.pictures_list = []
-
-    def set_default_type(self, type_list):
+    def set_searched_type(self, type_list):
         """
         set 'checked' of 'type buttons' according to the content of the directory: NEF, JPG, BOTH or NONE
         (note: the un/check job itself is done through the 'self.set_checked_type_buttons' routine)
@@ -215,7 +232,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         :return: None
         """
         if [type_list[0]]*len(type_list) == type_list: # all values are equal either True or False
-            full_type_list = [False]*(len(self.task_buttons_list)-1)
+            full_type_list = [False]*(len(self.type_radiobuttons_list) - 1)
             if type_list[0]:    # all True
                 full_type_list.append(True) # 'ALL button' to be checked
             else:   # all False
@@ -231,8 +248,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         :param full_type_list: list(bool)
         :return: None
         """
-        for index in range(len(self.task_buttons_list)):
-            self.task_buttons_list[index].setChecked(full_type_list[index])
+        for index in range(len(self.type_radiobuttons_list)):
+            self.type_radiobuttons_list[index].setChecked(full_type_list[index])
 
     def activate_exec_gallery_buttons(self, flag):
         # enable/disable EXEC and GALLERY buttons
@@ -251,12 +268,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.pictures_list.append(file) # store
         self.pictures_list.sort()   # and sort the list
 
-    def message_in_console(self, message):
+    def console_warning(self, message):
         msg = '\n====> ' + message.upper() +'\n'
         self.write_console(msg)
         return
-        self.console.addItem(msg)
-        self.console.scrollToBottom()
 
     def create_thumb_jpeg(self):
         """
@@ -290,7 +305,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         :param file_list: list: list of pictures to check
         :return: list(bool): telling the types of files found in 'file_list'
         """
-        type_list = [False]*(len(self.task_buttons_list)-1) # will allow more types in the future
+        type_list = [False]*(len(self.type_radiobuttons_list) - 1) # will allow more types in the future
         re_nef = re.compile(r".*\.nef$", re.IGNORECASE)  # nef filter
         re_jpg = re.compile(r".*\.jpe?g$", re.IGNORECASE)  # jpg filter
         filters = (re_nef, re_jpg)
