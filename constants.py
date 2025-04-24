@@ -7,7 +7,7 @@ NONE_ID = -1
 NEF_ID = 0
 JPG_ID = 1
 ALL_ID = 99
-TYPE_ID = [NEF_ID, JPG_ID]
+# TYPE_ID = [NEF_ID, JPG_ID]
 
 NEF_TXT = 'NEF'
 JPG_TXT = 'JPG/JPEG'
@@ -29,7 +29,6 @@ MSG_IMPORT_TYPE = 'Importation des fichiers '
 MSG_PRESS_EXECUTE = "Cliquez sur le bouton 'Exécuter' pour effectuer l'importation"
 MSG_SELECT_TYPE_TO_IMPORT = "Sinon, choisir le type d'images à importer puis ...\n"
 MSG_NO_PICTURE = 'Aucun fichier image dans ce répertoire'
-
 MSG_GROUP_NAME_MISSING = "N'entrez pas un nom vide"
 MSG_END = '==== Terminé ===='
 
