@@ -42,6 +42,8 @@ class GalleryDialog(QDialog):
     def __init__(self, pictures):
         super().__init__()
 
+        for picture in pictures:
+            print(';;;', picture)
         controls = Controls()
         gallery = Gallery(controls, pictures)
         display = Display(gallery)

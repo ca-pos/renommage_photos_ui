@@ -24,9 +24,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setWindowTitle('Renommage des Photos')
         self.setupUi(self)
         # variables
-        self.pictures_list = list()
         self.current_folder = str()
+        self.pictures_list = list()
         self.files_list = list()
+        self.type_list = list()
         self.task_to_do = NO_TASK
 
         # set text rb buttons text
@@ -39,9 +40,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.type_group.addButton(self.rb_jpg)
         self.type_group.addButton(self.rb_all)
         # set rb buttons ID
-        self.type_group.setId(self.rb_nef, NEF_ID)
-        self.type_group.setId(self.rb_jpg, JPG_ID)
-        self.type_group.setId(self.rb_all, ALL_ID)
+        # self.type_group.setId(self.rb_nef, NEF_ID)
+        # self.type_group.setId(self.rb_jpg, JPG_ID)
+        # self.type_group.setId(self.rb_all, ALL_ID)
 
         # note: if more types are added, 'rb_all' must remain the last one
         self.type_radiobuttons_list = [self.rb_nef, self.rb_jpg, self.rb_all]
@@ -55,7 +56,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # connect buttons
         # BTN
-        # self.btn_gallery.clicked.connect(self.show_gallery)                 # show gallery
+        self.btn_gallery.clicked.connect(self.show_gallery)                 # show gallery
         self.btn_gallery.setEnabled(False)
         self.btn_exec.clicked.connect(self.execute)                         # execute chosen task
         self.btn_exec.setEnabled(False)
@@ -90,11 +91,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # rb = self.sender()
         # self.searched_type = NEF_ID if rb.isChecked() else JPG_ID
 
-    # @Slot()
-    # def show_gallery(self):
-    #     print('Show Gallery')
-    #     gallery_dialog = GalleryDialog(self.pictures_list)
-    #     gallery_dialog.exec()
+    @Slot()
+    def show_gallery(self):
+        print('Show Gallery')
+        if not self.pictures_list:
+            self.pictures_list = self.create_pictures_list()
+        gallery_dialog = GalleryDialog(self.pictures_list)
+        gallery_dialog.exec()
 
     @Slot()
     def clear_console_output(self):
@@ -112,11 +115,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     @Slot()
     def execute(self):
         print('Importer (tâche ', self.task_to_do, ')')
-        filters = self.get_searched_type_filters()
-        pictures_list = self.create_pictures_list(filters)
+        if not self.pictures_list:
+            self.pictures_list = self.create_pictures_list()
+        self.import_card()
 
     def import_card(self):
         rank = 1
+        return # stop here for the moment (development phase)
         for file in self.pictures_list:
             exif = PhotoExif(file)
             dest_folder = STEP_0 + exif.compressed_date[0] + '/' + exif.compressed_date[1]
@@ -174,6 +179,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     #     pass
 
     def content_info(self, type_list):
+        """
+        provide console info about the content of the selected folder
+        :param type_list: list(bool) tells which type radiobutton is checked
+        :return: 'False' if no picture files in the folder, 'True' otherwise
+        """
         if type_list == [False]*len(type_list):
             self.console_warning(MSG_NO_PICTURE)
             return False
@@ -245,22 +255,35 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.set_checked_type_buttons(full_type_list)
 
     def get_searched_type_filters(self):
-        for rb in self.type_radiobuttons_list:
-            print(rb.isChecked())
-        print('&&&', self.type_radiobuttons_list[0].isChecked())
+        """
+        search across type (nef, jpg, etc.) radiobuttons which one, if any, is checked; if no buttons was checked
+        this means that the 'all types' radiobutton was checked (since, one button was necessarily checked)
+        :return: filter(s) for the searched type (regular expression) or the list of filters if all types are to be
+        searched
+        """
+        filters_list = self.get_type_filters()
+        all_filters = list()
+        for filter in filters_list:
+            all_filters.append(filter)
 
-        re_nef = re.compile(r".*\.nef$", re.IGNORECASE)  # nef filter
-        re_jpg = re.compile(r".*\.jpe?g$", re.IGNORECASE)  # jpg filter
-        filters_list = [[re_nef],[re_jpg],[re_jpg,re_nef]]
-        for i in range(len(self.type_radiobuttons_list)):
+        for i in range(len(self.type_radiobuttons_list)-1):
             if self.type_radiobuttons_list[i].isChecked():
-                return filters_list[i]
-        return []
+                return [filters_list[i]]
+        return all_filters
 
-    def create_pictures_list(self, filters):
+    def create_pictures_list(self):
+        """
+        read 'file_list', applies filter(s), and writes 'file' in 'pictures_list' if match
+        :return: list: selected pictures (nef, jpg, [etc., provision for adding more type in the future] or all)
+        """
         pictures_list = list()
-        filters = self.get_type_filters()
-        print(']]]', filters)
+        filters = self.get_searched_type_filters()
+
+        for file in self.files_list:
+            name, ext = os.path.splitext(file)
+            for index in range(len(filters)):
+                if bool(filters[index].match(file)):
+                    pictures_list.append(file)
 
         return pictures_list
 
@@ -324,21 +347,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         type_list = [False]*(len(self.type_radiobuttons_list) - 1) # will allow more types in the future
         filters = self.get_type_filters()
-        print('&&&', filters)
         for file in file_list:
             for index in range(len(filters)):
                 if bool(filters[index].match(file)):  # filter
                     type_list[index] = True
-            if type_list[0] and all(type_list): #type_list[0] and all others are True
+            if type_list[0] and all(type_list): #type_list[0] and all others are True no need to go any further
                 return type_list
         return type_list
-
-    def get_type_filters(self):
-        re_nef = re.compile(r".*\.nef$", re.IGNORECASE)  # nef filter
-        re_jpg = re.compile(r".*\.jpe?g$", re.IGNORECASE)  # jpg filter
-        filters = ((re_nef),(re_jpg))
-        return filters
-
 
     def write_console(self, message):
         carriage_return = '\n'
@@ -354,7 +369,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.console.scrollToBottom()
 
     @staticmethod
+    def get_type_filters():
+        """
+        regular expressions used to identify the different format of pictures (nef, jpg, etc.)
+        :return: list of filters
+        """
+        re_nef = re.compile(r".*\.nef$", re.IGNORECASE)  # nef filter
+        re_jpg = re.compile(r".*\.jpe?g$", re.IGNORECASE)  # jpg filter
+        filters = [re_nef, re_jpg]
+        return filters
+
+    @staticmethod
     def suppress_spaces(string_):
+        """
+        suppress leading, and trailing in a string and replaces series of 2+ spaces by a single one
+        :param string_: string in which extra spaces are to be removed
+        :return: string with extra spaces removed
+        """
         while string_[0] == ' ':  # get rid of leading spaces
             string_ = string_[1:len(string_)]
 
@@ -365,8 +396,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             string_ = string_.replace("  ", " ")  # replace double spaces with single space
 
         return string_
-
-
 
 
 if __name__ == '__main__':

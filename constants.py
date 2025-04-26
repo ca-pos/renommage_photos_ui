@@ -18,8 +18,8 @@ IMPORT_TASK_ID = 0
 RENAME_TASK_ID = 1
 CORRECT_TASK_ID = 2
 
-STEP_0 = '/home/camille/tmp/0. Tri & Renommage/tests_a_jeter/0._tri1/'      # to be changed in the final version
-STEP_1 = '/home/camille/tmp/0. Tri & Renommage/tests_a_jeter/1._import/'    # to be changed in the final version
+STEP_0 = '/home/camille/tmp/0. Tri & Renommage/tests_a_jeter/step_0/'      # to be changed in the final version
+STEP_1 = '/home/camille/tmp/0. Tri & Renommage/tests_a_jeter/step_1/'    # to be changed in the final version
 
 TMP_DIR = './tmp/'
 BLURRED = '_blurred'
