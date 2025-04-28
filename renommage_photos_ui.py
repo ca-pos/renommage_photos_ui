@@ -73,6 +73,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     @Slot()
     def prepare_task(self, btn_id):
+        """
+        'prepare' common trunk for all tasks (select folder and set searched type(s) according to its content)
+        :param btn_id: int: task id
+        :return: None
+        """
         self.task_to_do = btn_id
         files_list = self.open_dir()
         if files_list:
@@ -96,21 +101,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         print('Show Gallery')
         if not self.pictures_list:
             self.pictures_list = self.create_pictures_list()
+        self.create_thumb_jpeg()
         gallery_dialog = GalleryDialog(self.pictures_list)
         gallery_dialog.exec()
 
     @Slot()
     def clear_console_output(self):
         self.console.clear()
-
-    # @Slot()
-    # def gname_done(self):
-    #     if not self.edt_gname.text():  # enter pressed by itself
-    #         # ----> replace with a QMessage (?)
-    #         self.console_warning(MSG_GROUP_NAME_MISSING)
-    #         return
-    #     else:
-    #         self.activate_task_buttons(True, True, True)
 
     @Slot()
     def execute(self):
@@ -256,15 +253,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def get_searched_type_filters(self):
         """
-        search across type (nef, jpg, etc.) radiobuttons which one, if any, is checked; if no buttons was checked
-        this means that the 'all types' radiobutton was checked (since, one button was necessarily checked)
-        :return: filter(s) for the searched type (regular expression) or the list of filters if all types are to be
-        searched
+        Summary
+            search across type (nef, jpg, etc.) radiobuttons which one, if any, is checked; if no buttons was checked
+            this means that the 'all types' radiobutton was checked (since, one button was necessarily checked)
+
+        Return
+            filter(s) for the searched type (regular expression) or the list of filters if all types are to be searched
         """
         filters_list = self.get_type_filters()
         all_filters = list()
-        for filter in filters_list:
-            all_filters.append(filter)
+        for filter_ in filters_list:
+            all_filters.append(filter_)
 
         for i in range(len(self.type_radiobuttons_list)-1):
             if self.type_radiobuttons_list[i].isChecked():
@@ -296,34 +295,28 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         for index in range(len(self.type_radiobuttons_list)):
             self.type_radiobuttons_list[index].setChecked(full_type_list[index])
 
-    # def create_pictures_list(self, p_list):
-    #     # find picture files using filters
-    #     re_nef = re.compile(r".*\.nef$", re.IGNORECASE)  # nef filter
-    #     re_jpg = re.compile(r".*\.jpe?g$", re.IGNORECASE)  # jpg filter
-    #     filters = (re_nef, re_jpg)
-    #     index = self.type_group.checkedId()
-    #     for file in p_list:
-    #         if not bool(filters[index].match(file)):  # filter
-    #             continue
-    #         self.pictures_list.append(file) # store
-    #     self.pictures_list.sort()   # and sort the list
-
     def console_warning(self, message):
+        """
+        Summary
+            print a warning message to the console
+        Args:
+            message: str:
+            warning message to be displayer
+        Returns: None
+
+        """
         msg = '\n====> ' + message.upper() +'\n'
         self.write_console(msg)
-        return
+        # return
 
     def create_thumb_jpeg(self):
         """
         Summary
             create_thumb_jpeg: Creates a temporary directory for JPEG embedded in NEF files
-
-        Args:
-            photos_test: list[str]
-                list of the RAW files from which the JPEG is to be extracted
         """
         print(os.getcwd())
         os.makedirs(TMP_DIR, exist_ok=True)
+        exit(3)
         if self.searched_type:
             for i in range(0, len(self.pictures_list)):
                 shutil.copy(self.pictures_list[i], TMP_DIR)
