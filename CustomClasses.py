@@ -1,6 +1,6 @@
 # import os
 # from pathlib import Path
-
+import os
 # import pyexiv2
 import random
 import re
@@ -42,8 +42,6 @@ class GalleryDialog(QDialog):
     def __init__(self, pictures):
         super().__init__()
 
-        for picture in pictures:
-            print(';;;', picture)
         controls = Controls()
         gallery = Gallery(controls, pictures)
         display = Display(gallery)
@@ -98,7 +96,6 @@ class Gallery(QWidget):
         self.layout.setSpacing(0)
         self.layout.addStretch()
         self.setLayout(self.layout)
-
         # create Thumbnails and add to Gallery
         for i_thumb in range(len(fichier_raw)):
             photo_file = fichier_raw[i_thumb]
@@ -406,7 +403,6 @@ class Thumbnails(QWidget):
         on = OriginalName(self.exif.original_name)
         reversed_date = '/'.join(list(reversed(self.exif.date.split(' '))))
         self.thumbnail_title = on.original_name + '  (' + reversed_date + self.exif.date_suffix + ')'
-
         self._label = QLabel(self)
         self._label.setStyleSheet('margin: 0px 0px 5px 0px')
         self.set_pixmap(self._full_path_tmp)
