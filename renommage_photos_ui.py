@@ -1,19 +1,20 @@
-#import string
-import sys
-import os
-import shutil
-import re
-import rawpy
-from os.path import abspath, splitext, basename
-#from functools import partial
+# import os
+# import re
+# from functools import partial
+# from PySide6.QtCore import Slot, Qt, QIODevice
+#from PhotoExif import *
 
-from PySide6.QtWidgets import (QApplication, QMainWindow, QFileDialog, QButtonGroup, QDialog, QDialogButtonBox,
-                               QHBoxLayout, QVBoxLayout, QLabel, QPushButton)
-from PySide6.QtCore import Slot, Qt, QIODevice
+import sys
+import shutil
+import rawpy
+from os.path import abspath, basename#, splitext
+
+from PySide6.QtWidgets import (QApplication, QMainWindow, QFileDialog, QButtonGroup)
+                               #  , QDialog, QDialogButtonBox,
+                               # QHBoxLayout, QVBoxLayout, QLabel, QPushButton)
+from PIL import Image
 
 from interface import Ui_MainWindow
-
-from PhotoExif import *
 from CustomClasses import *
 
 from constants import *
@@ -45,7 +46,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # self.type_group.setId(self.rb_all, ALL_ID)
 
         # note: if more types are added, 'rb_all' must remain the last one
-        self.type_radiobuttons_list = [self.rb_nef, self.rb_jpg, self.rb_all]
+        self.type_radiobuttons_dict = {NEF_TXT: self.rb_nef, JPG_TXT: self.rb_jpg, ALL_TXT: self.rb_all}
 
         # initialize date suffix combobox
         self.cbx_date_suffix.setPlaceholderText('Choisir')
@@ -111,12 +112,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     @Slot()
     def execute(self):
-        print('Importer (tâche ', self.task_to_do, ')')
         if not self.pictures_list:
             self.pictures_list = self.create_pictures_list()
         self.import_card()
 
     def import_card(self):
+        print('Importer (tâche ', self.task_to_do, ')')
         rank = 1
         return # stop here for the moment (development phase)
         for file in self.pictures_list:
@@ -190,7 +191,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             type_ = 'NEF' if type_list[NEF_ID] else 'JPG/JPEG' if type_list[JPG_ID] else None
             self.console_warning(MSG_IMPORT_TYPE + f'\'{type_}\'')
-            for rb in self.type_radiobuttons_list:
+            for rb in self.type_radiobuttons_dict.values():
                 rb.setEnabled(False)
         self.write_console(MSG_PRESS_EXECUTE)
         return True
@@ -241,7 +242,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         :return: None
         """
         if [type_list[0]]*len(type_list) == type_list: # all values are equal either True or False
-            full_type_list = [False]*(len(self.type_radiobuttons_list) - 1)
+            full_type_list = [False]*(len(self.type_radiobuttons_dict) - 1)
             if type_list[0]:    # all True
                 full_type_list.append(True) # 'ALL button' to be checked
             else:   # all False
@@ -262,12 +263,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         filters_list = self.get_type_filters()
         all_filters = list()
-        for filter_ in filters_list:
+        for filter_ in filters_list.values():
             all_filters.append(filter_)
 
-        for i in range(len(self.type_radiobuttons_list)-1):
-            if self.type_radiobuttons_list[i].isChecked():
-                return [filters_list[i]]
+        for index in range(len(self.type_radiobuttons_dict)-1):
+            if self.type_radiobuttons_dict[TXT_TYPES_LIST[index]].isChecked():
+                return [filters_list[TXT_TYPES_LIST[index]]]
         return all_filters
 
     def create_pictures_list(self):
@@ -292,8 +293,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         :param full_type_list: list(bool)
         :return: None
         """
-        for index in range(len(self.type_radiobuttons_list)):
-            self.type_radiobuttons_list[index].setChecked(full_type_list[index])
+        for index in range(len(self.type_radiobuttons_dict)):
+            self.type_radiobuttons_dict[TXT_TYPES_LIST[index]].setChecked(full_type_list[index])
 
     def console_warning(self, message):
         """
@@ -316,9 +317,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         print(os.getcwd())
         os.makedirs(TMP_DIR, exist_ok=True)
-
         for photo in self.pictures_list:
-            print(os.path.splitext(photo))
+            img = Image.open(photo)
 
         exit(7)
         if self.searched_type:
@@ -342,12 +342,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         :param file_list: list: list of pictures to check
         :return: list(bool): telling the types of files found in 'file_list'
         """
-        type_list = [False]*(len(self.type_radiobuttons_list) - 1) # will allow more types in the future
+        type_list = [False]*(len(self.type_radiobuttons_dict) - 1) # will allow more types in the future
         filters = self.get_type_filters()
+        # for k, v in filters.items():
+        #     print('---', k, v)
         for file in file_list:
             tmp, ext = os.path.splitext(file)
             for index in range(len(filters)):
-                if bool(filters[index].match(ext)):  # filter
+                if bool(filters[TXT_TYPES_LIST[index]].match(ext)):  # filter
                     type_list[index] = True
             if type_list[0] and all(type_list): #type_list[0] and all others are True no need to go any further
                 return type_list
@@ -374,8 +376,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         re_nef = re.compile(r".*\.nef$", re.IGNORECASE)  # nef filter
         re_jpg = re.compile(r".*\.jpe?g$", re.IGNORECASE)  # jpg filter
-        filters = [re_nef, re_jpg]
-        # filters = {NEF_TXT: re_nef, JPG_TXT: re_jpg}
+        # filters = [re_nef, re_jpg]
+        filters = {NEF_TXT: re_nef, JPG_TXT: re_jpg}
         # for v in filters.values():
         #     print(v)
         # exit(6)
@@ -403,8 +405,5 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     renameWindow = MainWindow()
-
-
     renameWindow.show()
-
     sys.exit(app.exec())

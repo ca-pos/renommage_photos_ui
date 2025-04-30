@@ -12,6 +12,7 @@ ALL_ID = 99
 NEF_TXT = 'NEF'
 JPG_TXT = 'JPG/JPEG'
 ALL_TXT = 'Tout'
+TXT_TYPES_LIST = [NEF_TXT, JPG_TXT, ALL_TXT]
 
 NO_TASK = -1
 IMPORT_TASK_ID = 0
@@ -46,4 +47,5 @@ PIXMAP_MAX_SIZE = 300
 PIXMAP_SCALE = QSize(PIXMAP_MAX_SIZE, PIXMAP_MAX_SIZE)
 
 
-
+# size of iphone jpeg: (1354, 2323)
+# size of NEF-embedded thumb (6000, 4000)
