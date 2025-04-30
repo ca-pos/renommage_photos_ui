@@ -65,7 +65,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # tasks pushbuttons
         self.btn_import.clicked.connect(partial(self.prepare_task, IMPORT_TASK_ID))   # import button        
         # radiobuttons
-        self.rb_nef.clicked.connect(self.type_rb_clicked)           # choose which type of picture
+        self.rb_nef.clicked.connect(self.type_rb_clicked)           # choose which type of picture not used yet
         self.rb_jpg.clicked.connect(self.type_rb_clicked)
         self.rb_all.clicked.connect(self.type_rb_clicked)
         # group name edit
@@ -101,7 +101,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         print('Show Gallery')
         if not self.pictures_list:
             self.pictures_list = self.create_pictures_list()
-        self.create_thumb_jpeg()
+        self.create_temporary_jpeg()
         gallery_dialog = GalleryDialog(self.pictures_list)
         gallery_dialog.exec()
 
@@ -309,14 +309,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.write_console(msg)
         # return
 
-    def create_thumb_jpeg(self):
+    def create_temporary_jpeg(self):
         """
         Summary
             create_thumb_jpeg: Creates a temporary directory for JPEG embedded in NEF files
         """
         print(os.getcwd())
         os.makedirs(TMP_DIR, exist_ok=True)
-        exit(3)
+
+        for photo in self.pictures_list:
+            print(os.path.splitext(photo))
+
+        exit(7)
         if self.searched_type:
             for i in range(0, len(self.pictures_list)):
                 shutil.copy(self.pictures_list[i], TMP_DIR)
@@ -341,8 +345,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         type_list = [False]*(len(self.type_radiobuttons_list) - 1) # will allow more types in the future
         filters = self.get_type_filters()
         for file in file_list:
+            tmp, ext = os.path.splitext(file)
             for index in range(len(filters)):
-                if bool(filters[index].match(file)):  # filter
+                if bool(filters[index].match(ext)):  # filter
                     type_list[index] = True
             if type_list[0] and all(type_list): #type_list[0] and all others are True no need to go any further
                 return type_list
@@ -370,6 +375,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         re_nef = re.compile(r".*\.nef$", re.IGNORECASE)  # nef filter
         re_jpg = re.compile(r".*\.jpe?g$", re.IGNORECASE)  # jpg filter
         filters = [re_nef, re_jpg]
+        # filters = {NEF_TXT: re_nef, JPG_TXT: re_jpg}
+        # for v in filters.values():
+        #     print(v)
+        # exit(6)
         return filters
 
     @staticmethod
