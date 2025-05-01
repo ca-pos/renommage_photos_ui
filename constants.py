@@ -9,6 +9,8 @@ JPG_ID = 1
 ALL_ID = 99
 # TYPE_ID = [NEF_ID, JPG_ID]
 
+NEF_EXT = '.NEF'
+JPG_EXT = '.JPG'
 NEF_TXT = 'NEF'
 JPG_TXT = 'JPG/JPEG'
 ALL_TXT = 'Tout'
@@ -24,6 +26,8 @@ STEP_1 = '/home/camille/tmp/0. Tri & Renommage/tests_a_jeter/step_1/'    # to be
 
 TMP_DIR = './tmp/'
 BLURRED = '_blurred'
+FULL_SIZE = '_full_size'
+THUMB_SIZE = '_thumb_size'
 
 MSG_IMPORT_ALL = 'Importation de tous les fichiers images ...'
 MSG_IMPORT_TYPE = 'Importation des fichiers '

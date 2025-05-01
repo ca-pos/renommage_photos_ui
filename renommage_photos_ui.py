@@ -3,16 +3,17 @@
 # from functools import partial
 # from PySide6.QtCore import Slot, Qt, QIODevice
 #from PhotoExif import *
-
+# import os.path
+from os.path import abspath, basename#, splitext
 import sys
 import shutil
 import rawpy
-from os.path import abspath, basename#, splitext
+import imageio
+from PIL import Image
 
 from PySide6.QtWidgets import (QApplication, QMainWindow, QFileDialog, QButtonGroup)
                                #  , QDialog, QDialogButtonBox,
                                # QHBoxLayout, QVBoxLayout, QLabel, QPushButton)
-from PIL import Image
 
 from interface import Ui_MainWindow
 from CustomClasses import *
@@ -31,6 +32,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.type_list = list()
         self.task_to_do = NO_TASK
 
+        # creates type filters (TODO: get rid of get_type_filters static method !
+        re_nef = re.compile(r".*\.nef$", re.IGNORECASE)  # nef filter
+        re_jpg = re.compile(r".*\.jpe?g$", re.IGNORECASE)  # jpg filter
+        self.type_filters = {NEF_TXT: re_nef, JPG_TXT: re_jpg}
+
+
         # set text rb buttons text
         self.rb_nef.setText(NEF_TXT)
         self.rb_jpg.setText(JPG_TXT)
@@ -40,10 +47,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.type_group.addButton(self.rb_nef)
         self.type_group.addButton(self.rb_jpg)
         self.type_group.addButton(self.rb_all)
-        # set rb buttons ID
-        # self.type_group.setId(self.rb_nef, NEF_ID)
-        # self.type_group.setId(self.rb_jpg, JPG_ID)
-        # self.type_group.setId(self.rb_all, ALL_ID)
 
         # note: if more types are added, 'rb_all' must remain the last one
         self.type_radiobuttons_dict = {NEF_TXT: self.rb_nef, JPG_TXT: self.rb_jpg, ALL_TXT: self.rb_all}
@@ -313,12 +316,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def create_temporary_jpeg(self):
         """
         Summary
-            create_thumb_jpeg: Creates a temporary directory for JPEG embedded in NEF files
+            create_thumb_jpeg: Creates temporary pictures needed for Gallery: thumb size and full size jpeg
         """
-        print(os.getcwd())
         os.makedirs(TMP_DIR, exist_ok=True)
         for photo in self.pictures_list:
-            img = Image.open(photo)
+            name, ext = os.path.splitext(photo)
+            file_name_common = TMP_DIR +  basename(name)
+
+            if bool(self.type_filters[NEF_TXT].match(ext)): #process NEF files to get JPEG
+                print('En cours de traitement ... ', file_name_common)
+                with rawpy.imread(photo) as raw:
+                    jpeg_img = raw.postprocess()
+                full_name = file_name_common + FULL_SIZE + JPG_EXT
+                imageio.imsave(full_name, jpeg_img)
 
         exit(7)
         if self.searched_type:
