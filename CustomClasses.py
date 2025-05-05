@@ -393,18 +393,17 @@ class Thumbnails(QWidget):
         self.exif = PhotoExif(photo)
         self.bg_color = '#bbb' #maybe useless, to check
         self.is_selected = False
-        self._full_path_tmp = TMP_DIR + self.exif.original_name + '.jpeg'
-        self._full_path_tmp_blurred = TMP_DIR + self.exif.original_name + BLURRED + '.jpeg'
+        self._full_path_tmp = TMP_DIR + self.exif.original_name + JPG_EXT
+        self._full_path_tmp_blurred = TMP_DIR + self.exif.original_name + BLURRED + JPG_EXT
         Thumbnails.count += 1
         self.rank = Thumbnails.count    # used in gallery to access this thumbnail
 
-        # self._thumbnail_title = ''
-        #self.thumbnail_title = self.exif.original_name + '  ('  + self.exif.date.replace(' ', '/') + ')'
         on = OriginalName(self.exif.original_name)
-        reversed_date = '/'.join(list(reversed(self.exif.date.split(' '))))
+        reversed_date = '/'.join(list(reversed(self.exif.date.split(' ')))) if self.exif.date else ''
         self.thumbnail_title = on.original_name + '  (' + reversed_date + self.exif.date_suffix + ')'
         self._label = QLabel(self)
         self._label.setStyleSheet('margin: 0px 0px 5px 0px')
+        print('sss', self._full_path_tmp)
         self.set_pixmap(self._full_path_tmp)
 
         # create the show/hide button (afficher/masquer)
@@ -581,7 +580,6 @@ class OriginalName:
         for r in regex:
             on = re.findall(r, current_name)
             if on:
-                print('on', r)
                 self._original_name = on[0]
                 break
             else:

@@ -1,6 +1,7 @@
 from pathlib import Path
 import string
 import pyexiv2
+from PIL import Image
 
 class PhotoExif:
     """
@@ -18,8 +19,13 @@ class PhotoExif:
         compressed_date: tuple
             the first element of the tuple represents the decade (format: YYYX), the second one the date itself (format: YMDD, where Y is the last part of the year et M is the month as a letter between A for january and L for december)
             Note: the compressed date is for compatibility with old files (the time of the 8.3 filenames)
-        oriention: str
-            portrait (exif orientation == 8), landscape (otherwise)
+        orientation: str
+            unknown if no orientation tag in the exif otherwise :
+            portrait (exif orientation == 8), paysage (otherwise)
+        hauteur: int
+            height of the image
+        largeur: int
+            width of the image
         nikon_file_number: int
             Nikon file number
     """
@@ -31,17 +37,30 @@ class PhotoExif:
             file: str
                 path to the RAW file
         """
+        self._compressed_date = None
         self._file = file
         self._date_suffix = ''
         path = Path(file)
         self.dir = str(path.cwd()) # maybe useless
         self.original_name = path.stem
         self.original_suffix = path.suffix
+
+        img = Image.open(file)
+        w, h = img.size
+        self.largeur = w
+        self.hauteur = h
+
         meta_data = pyexiv2.ImageMetadata(file)
         meta_data.read()
-        self.date = meta_data['Exif.Image.DateTimeOriginal'].value.strftime('%Y %m %d')
-        orientation = meta_data['Exif.Image.Orientation'].value
-        self.orientation = 'portrait' if orientation == 8 else 'landscape'
+        # for key in meta_data.exif_keys:
+        #     print('key:', key)
+        self.date = None
+        if 'Exif.Photo.DateTimeOriginal' in list(meta_data):
+            self.date = meta_data['Exif.Photo.DateTimeOriginal'].value.strftime('%Y %m %d')
+        self.orientation = None
+        if 'Exif.Image.Orientation' in list(meta_data):
+            orientation = meta_data['Exif.Image.Orientation'].value
+            self.orientation = 'portrait' if orientation == 8 else 'paysage'
         if self.original_suffix == '.NEF':
             self.nikon_file_number = meta_data['Exif.NikonFi.FileNumber'].value
         else:

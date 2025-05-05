@@ -9,10 +9,14 @@ import sys
 import shutil
 import rawpy
 import imageio
-from PIL import Image
+import pyexiv2
+import datetime
+import pathlib
 
 from PySide6.QtWidgets import (QApplication, QMainWindow, QFileDialog, QButtonGroup)
-                               #  , QDialog, QDialogButtonBox,
+from pathlib import PosixPath
+
+#  , QDialog, QDialogButtonBox,
                                # QHBoxLayout, QVBoxLayout, QLabel, QPushButton)
 
 from interface import Ui_MainWindow
@@ -103,11 +107,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     @Slot()
     def show_gallery(self):
         print('Show Gallery')
-        if not self.pictures_list:
+        if not self.pictures_list:  #self_pictures_list does not exist yet
             self.pictures_list = self.create_pictures_list()
-        self.create_temporary_jpeg()
-        gallery_dialog = GalleryDialog(self.pictures_list)
-        gallery_dialog.exec()
+        pictures_in_tmp = ['./'+str(val) for val in pathlib.Path(TMP_DIR).iterdir()]# if (val.is_file())]
+        os.makedirs(TMP_DIR, exist_ok=True) # creates temporary folder to hold jpeg (original or from nef)
+        for photo in self.pictures_list:
+            name, ext = os.path.splitext(photo)
+            jpeg_filename = TMP_DIR + basename(name) + JPG_EXT
+            if bool(self.type_filters[NEF_TXT].match(ext)): # nef file found
+                if not jpeg_filename in pictures_in_tmp:    # jpeg not yet in TMP_DIR
+                    self.write_console(f'Création du JPEG ... {jpeg_filename}')
+                self.create_temporary_jpeg(photo, jpeg_filename)    # create jpeg
+            elif bool(self.type_filters[JPG_TXT].match(ext)):
+                print('===', photo, jpeg_filename)
+                # shutil.copy(photo, jpeg_filename)
+            else:
+                msg = f'{ext} : extension non prévue !'
+                self.console_warning(msg)
+        self.write_console('Liste temporaire créée')
+
+        # gallery_dialog = GalleryDialog(pictures_for_thumbs_list)
+        # gallery_dialog.exec()
 
     @Slot()
     def clear_console_output(self):
@@ -285,7 +305,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         for file in self.files_list:
             name, ext = os.path.splitext(file)
             for index in range(len(filters)):
-                if bool(filters[index].match(file)):
+                if bool(filters[index].match(ext)):
                     pictures_list.append(file)
 
         return pictures_list
@@ -313,24 +333,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.write_console(msg)
         # return
 
-    def create_temporary_jpeg(self):
+    def create_temporary_jpeg(self, photo, jpeg_filename):
         """
         Summary
-            create_thumb_jpeg: Creates temporary pictures needed for Gallery: thumb size and full size jpeg
+            create_thumb_jpeg: Creates temporary jpeg pictures from NEF. Needed for Gallery
         """
-        os.makedirs(TMP_DIR, exist_ok=True)
-        for photo in self.pictures_list:
-            name, ext = os.path.splitext(photo)
-            file_name_common = TMP_DIR +  basename(name)
+        photo_exif = PhotoExif(photo)
 
-            if bool(self.type_filters[NEF_TXT].match(ext)): #process NEF files to get JPEG
-                print('En cours de traitement ... ', file_name_common)
-                with rawpy.imread(photo) as raw:
-                    jpeg_img = raw.postprocess()
-                full_name = file_name_common + FULL_SIZE + JPG_EXT
-                imageio.imsave(full_name, jpeg_img)
+        with rawpy.imread(photo) as raw:
+            jpeg_img = raw.postprocess()
+        imageio.imsave(jpeg_filename, jpeg_img)
 
-        exit(7)
+        return
         if self.searched_type:
             for i in range(0, len(self.pictures_list)):
                 shutil.copy(self.pictures_list[i], TMP_DIR)
