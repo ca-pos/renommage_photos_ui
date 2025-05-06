@@ -4,6 +4,7 @@
 # from PySide6.QtCore import Slot, Qt, QIODevice
 #from PhotoExif import *
 # import os.path
+from importlib.metadata import metadata
 from os.path import abspath, basename#, splitext
 import sys
 import shutil
@@ -339,10 +340,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             create_thumb_jpeg: Creates temporary jpeg pictures from NEF. Needed for Gallery
         """
         photo_exif = PhotoExif(photo)
+        year, month, day, hour, minute, second = list(map(int, photo_exif.date_heure.split()))
+        datetime_taken = datetime.datetime(year, month, day, hour, minute, second)
 
         with rawpy.imread(photo) as raw:
             jpeg_img = raw.postprocess()
         imageio.imsave(jpeg_filename, jpeg_img)
+        meta_data = pyexiv2.ImageMetadata(jpeg_filename)
+        meta_data.read()
+        key = 'Exif.Photo.DateTimeOriginal'
+        meta_data[key] = datetime_taken
+        meta_data.write()
 
         return
         if self.searched_type:
