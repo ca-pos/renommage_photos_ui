@@ -5,15 +5,17 @@ from PIL import Image
 
 class PhotoExif:
     """
-    PhotoExif object contains the exif informations necessary for the present program and a compressed version of the original date
+    PhotoExif object contains the exif information necessary for the present program and a compressed version of the original date
 
     Attributes
         dir: str
             directory containing the RAW files
         original_name: str
             original name (stem) from camera memory card
-        original_suffix: str
+        original_ext: str
             original ext (NEF for Nikon)
+        original_suffix: str
+            idem original_ext (for backward compatibility)
         date [%Y %m %d]: str
             original date (date of the shooting)
         compressed_date: tuple
@@ -21,10 +23,10 @@ class PhotoExif:
             Note: the compressed date is for compatibility with old files (the time of the 8.3 filenames)
         orientation: str
             unknown if no orientation tag in the exif otherwise :
-            portrait (exif orientation == 8), paysage (otherwise)
-        hauteur: int
+            portrait (exif orientation == 8), landscape (otherwise)
+        height: int
             height of the image
-        largeur: int
+        width: int
             width of the image
         nikon_file_number: int
             Nikon file number
@@ -43,12 +45,13 @@ class PhotoExif:
         path = Path(file)
         self.dir = str(path.cwd()) # maybe useless
         self.original_name = path.stem
-        self.original_suffix = path.suffix
+        self.original_suffix = path.suffix  # kept for backward compatibility
+        self.original_ext = self.original_suffix
 
         img = Image.open(file)
         w, h = img.size
-        self.largeur = w
-        self.hauteur = h
+        self.width = w
+        self.height = h
 
         meta_data = pyexiv2.ImageMetadata(file)
         meta_data.read()

@@ -102,7 +102,6 @@ class Gallery(QWidget):
             th = Thumbnails(photo_file)
             self.layout.addWidget(th)
             th.set_bg_color(self.assign_bg_color(th.rank))
-            print('+++', th.rank, th.exif.full_path) # <--- remove
             # process signals from thumbnails
             th.selected.connect(partial(self.thumb_selected, th.rank))
             th.colored.connect(partial(self.change_group_bg_color, th.rank))
@@ -364,7 +363,7 @@ class Thumbnails(QWidget):
     modifier = Qt.KeyboardModifier.NoModifier
     count: int = 0
 
-    def __init__(self, photo: str):
+    def __init__(self, photo):
         """
         __init__ creates Thumbnails objects
 
@@ -398,7 +397,7 @@ class Thumbnails(QWidget):
         Thumbnails.count += 1
         self.rank = Thumbnails.count    # used in gallery to access this thumbnail
 
-        on = OriginalName(self.exif.original_name)
+        on = OriginalName(self._full_path_tmp)
         reversed_date = '/'.join(list(reversed(self.exif.date.split(' ')))) if self.exif.date else ''
         self.thumbnail_title = on.original_name + '  (' + reversed_date + self.exif.date_suffix + ')'
         self._label = QLabel(self)
@@ -569,16 +568,15 @@ class Controls(QWidget):
 #################################################################################
 class OriginalName:
     '''Try to find the original name of the file'''
-    def __init__(self, current_name):
+    def __init__(self, current_ext):
         """
         :param current_name: name of the file in which the original is to be found
         """
         self._original_name = ''
-
         regex = (r'.*(_DSC\d\d\d\d)\D', r'.*(DSC_\d\d\d\d)\D', r'.*(IMG_\d{4,4})\D')
 
         for r in regex:
-            on = re.findall(r, current_name)
+            on = re.findall(r, current_ext)
             if on:
                 self._original_name = on[0]
                 break

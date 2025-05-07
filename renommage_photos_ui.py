@@ -36,6 +36,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.files_list = list()
         self.type_list = list()
         self.task_to_do = NO_TASK
+        self.pictures_in_tmp = list()
 
         # creates type filters (TODO: get rid of get_type_filters static method !
         re_nef = re.compile(r".*\.nef$", re.IGNORECASE)  # nef filter
@@ -110,25 +111,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         print('Show Gallery')
         if not self.pictures_list:  #self_pictures_list does not exist yet
             self.pictures_list = self.create_pictures_list()
-        pictures_in_tmp = ['./'+str(val) for val in pathlib.Path(TMP_DIR).iterdir()]# if (val.is_file())]
         os.makedirs(TMP_DIR, exist_ok=True) # creates temporary folder to hold jpeg (original or from nef)
+        self.get_pictures_in_tmp()
         for photo in self.pictures_list:
             name, ext = os.path.splitext(photo)
             jpeg_filename = TMP_DIR + basename(name) + JPG_EXT
             if bool(self.type_filters[NEF_TXT].match(ext)): # nef file found
-                if not jpeg_filename in pictures_in_tmp:    # jpeg not yet in TMP_DIR
-                    self.write_console(f'Création du JPEG ... {jpeg_filename}')
-                self.create_temporary_jpeg(photo, jpeg_filename)    # create jpeg
+                if not jpeg_filename in self.pictures_in_tmp:    # jpeg not yet in TMP_DIR
+                    print(f'Création du JPEG ... {jpeg_filename}')
+                    self.create_temporary_jpeg(photo, jpeg_filename)    # create jpeg from NEF photo
             elif bool(self.type_filters[JPG_TXT].match(ext)):
                 print('===', photo, jpeg_filename)
-                # shutil.copy(photo, jpeg_filename)
+                shutil.copy(photo, jpeg_filename)
             else:
                 msg = f'{ext} : extension non prévue !'
                 self.console_warning(msg)
         self.write_console('Liste temporaire créée')
-
-        # gallery_dialog = GalleryDialog(pictures_for_thumbs_list)
-        # gallery_dialog.exec()
+        self.get_pictures_in_tmp()
+        gallery_dialog = GalleryDialog(self.pictures_in_tmp)
+        gallery_dialog.exec()
 
     @Slot()
     def clear_console_output(self):
@@ -399,6 +400,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.console.addItem(message[start:end])
 
         self.console.scrollToBottom()
+
+    def get_pictures_in_tmp(self):
+        self.pictures_in_tmp = ['./'+str(val) for val in pathlib.Path(TMP_DIR).iterdir()]
+        self.pictures_in_tmp.sort()
 
     @staticmethod
     def get_type_filters():
