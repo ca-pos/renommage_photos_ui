@@ -1,17 +1,16 @@
 # import os
 # from pathlib import Path
-import os
 # import pyexiv2
 import random
 import re
 from functools import partial
 
-from PySide6.QtWidgets import QWidget, QGridLayout, QVBoxLayout, QGroupBox, QLabel, QPushButton, QHBoxLayout
-from PySide6.QtGui import QPixmap, QTransform, QPalette, QKeyEvent, QIcon
-from PySide6.QtCore import Qt, Signal, Slot, QObject, QFile, QTextStream, QIODevice
+from PySide6.QtWidgets import QWidget, QGridLayout, QVBoxLayout, QGroupBox, QLabel, QPushButton, QHBoxLayout, QApplication
+from PySide6.QtGui import QPixmap, QTransform, QPalette, QIcon, QScreen
+from PySide6.QtCore import Qt, Signal, Slot, QFile, QTextStream, QIODevice, QSize
 
 from PySide6.QtWidgets import QScrollArea, QCheckBox, QDialog, QDialogButtonBox
-from PIL import Image, ImageFilter
+from PIL import ImageFilter
 
 from PhotoExif import *
 
@@ -48,8 +47,9 @@ class GalleryDialog(QDialog):
         layout = QVBoxLayout()
         layout.addWidget(display)
         layout.addWidget(controls)
+        screen_size = QScreen.availableGeometry(QApplication.primaryScreen())
+        self.setMinimumSize(QSize(screen_size.width(), 720))
         self.setLayout(layout)
-
 #################################################################################
 class Display(QScrollArea):
     def __init__(self, gallery) -> None:
@@ -83,10 +83,6 @@ class Gallery(QWidget):
         __init__ creates Gallery objects
         """
         super().__init__()
-        # development only ---------------------------------------------------------
-        # fichier_raw = [str(fichier) for fichier in Path('./pictures').glob('*.NEF')]
-        # fichier_raw = sorted(fichier_raw)
-        # ----------------------------------------------------------------------------
         self.first = -1
         self.last = -1
         self.list_set = False
@@ -397,12 +393,11 @@ class Thumbnails(QWidget):
         Thumbnails.count += 1
         self.rank = Thumbnails.count    # used in gallery to access this thumbnail
 
-        on = OriginalName(self._full_path_tmp)
+        original_name = OriginalName(self._full_path_tmp)
         reversed_date = '/'.join(list(reversed(self.exif.date.split(' ')))) if self.exif.date else ''
-        self.thumbnail_title = on.original_name + '  (' + reversed_date + self.exif.date_suffix + ')'
+        self.thumbnail_title = original_name.original_name + '  (' + reversed_date + self.exif.date_suffix + ')'
         self._label = QLabel(self)
         self._label.setStyleSheet('margin: 0px 0px 5px 0px')
-        print('sss', self._full_path_tmp)
         self.set_pixmap(self._full_path_tmp)
 
         # create the show/hide button (afficher/masquer)

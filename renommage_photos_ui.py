@@ -1,10 +1,8 @@
-# import os
+import os
 # import re
 # from functools import partial
 # from PySide6.QtCore import Slot, Qt, QIODevice
 #from PhotoExif import *
-# import os.path
-from importlib.metadata import metadata
 from os.path import abspath, basename#, splitext
 import sys
 import shutil
@@ -121,7 +119,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     print(f'Création du JPEG ... {jpeg_filename}')
                     self.create_temporary_jpeg(photo, jpeg_filename)    # create jpeg from NEF photo
             elif bool(self.type_filters[JPG_TXT].match(ext)):
-                print('===', photo, jpeg_filename)
                 shutil.copy(photo, jpeg_filename)
             else:
                 msg = f'{ext} : extension non prévue !'
@@ -341,7 +338,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             create_thumb_jpeg: Creates temporary jpeg pictures from NEF. Needed for Gallery
         """
         photo_exif = PhotoExif(photo)
-        year, month, day, hour, minute, second = list(map(int, photo_exif.date_heure.split()))
+        year, month, day, hour, minute, second = list(map(int, photo_exif.date_time.split()))
         datetime_taken = datetime.datetime(year, month, day, hour, minute, second)
 
         with rawpy.imread(photo) as raw:
@@ -403,7 +400,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def get_pictures_in_tmp(self):
         self.pictures_in_tmp = ['./'+str(val) for val in pathlib.Path(TMP_DIR).iterdir()]
-        self.pictures_in_tmp.sort()
+        tmp_dict = dict()
+        for picture in self.pictures_in_tmp: # create a dict {datetime: picture path}
+            exif = PhotoExif(picture)
+            key = exif.raw_date_time
+            tmp_dict[key] = picture
+        sorted_tmp_dict = dict(sorted(tmp_dict.items()))    # sort dict as a function of key (i.e. datetime)
+        self.pictures_in_tmp = [val for val in sorted_tmp_dict.values()] # transfer datetime sorted values to
+        # self.pictures_in_tmp
 
     @staticmethod
     def get_type_filters():

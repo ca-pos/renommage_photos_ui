@@ -60,8 +60,9 @@ class PhotoExif:
         self.date = None
         if 'Exif.Photo.DateTimeOriginal' in list(meta_data):
             self.date = meta_data['Exif.Photo.DateTimeOriginal'].value.strftime('%Y %m %d')
-            self.heure = meta_data['Exif.Photo.DateTimeOriginal'].value.strftime('%H %M %S')
-            self.date_heure = meta_data['Exif.Photo.DateTimeOriginal'].value.strftime('%Y %m %d %H %M %S')
+            self.time = meta_data['Exif.Photo.DateTimeOriginal'].value.strftime('%H %M %S')
+            self.date_time = meta_data['Exif.Photo.DateTimeOriginal'].value.strftime('%Y %m %d %H %M %S')
+            self.raw_date_time = meta_data['Exif.Photo.DateTimeOriginal'].value
         self.orientation = None
         if 'Exif.Image.Orientation' in list(meta_data):
             orientation = meta_data['Exif.Image.Orientation'].value
