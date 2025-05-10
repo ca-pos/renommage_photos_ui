@@ -3,7 +3,7 @@ import os
 # from functools import partial
 # from PySide6.QtCore import Slot, Qt, QIODevice
 #from PhotoExif import *
-from os.path import abspath, basename#, splitext
+from os.path import abspath, basename
 import sys
 import shutil
 import rawpy
@@ -11,12 +11,9 @@ import imageio
 import pyexiv2
 import datetime
 import pathlib
+from functools import partial
 
-from PySide6.QtWidgets import (QApplication, QMainWindow, QFileDialog, QButtonGroup)
-from pathlib import PosixPath
-
-#  , QDialog, QDialogButtonBox,
-                               # QHBoxLayout, QVBoxLayout, QLabel, QPushButton)
+from PySide6.QtWidgets import (QMainWindow, QFileDialog, QButtonGroup)
 
 from interface import Ui_MainWindow
 from CustomClasses import *
@@ -40,7 +37,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         re_nef = re.compile(r".*\.nef$", re.IGNORECASE)  # nef filter
         re_jpg = re.compile(r".*\.jpe?g$", re.IGNORECASE)  # jpg filter
         self.type_filters = {NEF_TXT: re_nef, JPG_TXT: re_jpg}
-
 
         # set text rb buttons text
         self.rb_nef.setText(NEF_TXT)
@@ -141,26 +137,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def import_card(self):
         print('Importer (tâche ', self.task_to_do, ')')
         rank = 1
-        return # stop here for the moment (development phase)
-        for file in self.pictures_list:
-            exif = PhotoExif(file)
-            dest_folder = STEP_0 + exif.compressed_date[0] + '/' + exif.compressed_date[1]
-            os.makedirs(dest_folder, exist_ok=True) # create the destination folder if necessary
-            try:
-                shutil.copy(file, dest_folder)          # ----> replace with shutil.move
-            except shutil.SameFileError: # ---->replace next two lines with a QMessage
-                print('Tentative de recopier une fichier sur lui-même !')
-                print('Sans doute une erreur de choix de tâche, p.ex. Importer au lieu de renommer')
-                return
-            print('$$$', rank, file) # ----> replace with a progress bar here
-            rank += 1
-        print('Déplacement/Tri par jour terminé') # ----> replace with a QMessage
-        # do the cleaning
-        self.pictures_list = []
-        #self.lst_files.clear()
-        self.btn_exec.setEnabled(False) #----> uncomment
-        self.btn_gallery.setEnabled(False)  #----> uncomment
-        self.btn_rename.setChecked(True)
 
     # def rename_pictures(self):
     #     group_name = self.edt_gname.text()
@@ -446,5 +422,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     renameWindow = MainWindow()
+
+    f = QFile("./style.qss")
+    f.open(QIODevice.ReadOnly)
+    app.setStyleSheet(QTextStream(f).readAll())
+
     renameWindow.show()
     sys.exit(app.exec())

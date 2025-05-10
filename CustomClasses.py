@@ -1,9 +1,10 @@
-# import os
+import os
 # from pathlib import Path
 # import pyexiv2
 import random
 import re
 from functools import partial
+from multiprocessing.process import parent_process
 
 from PySide6.QtWidgets import QWidget, QGridLayout, QVBoxLayout, QGroupBox, QLabel, QPushButton, QHBoxLayout, QApplication
 from PySide6.QtGui import QPixmap, QTransform, QPalette, QIcon, QScreen
@@ -48,19 +49,18 @@ class GalleryDialog(QDialog):
         layout.addWidget(display)
         layout.addWidget(controls)
         screen_size = QScreen.availableGeometry(QApplication.primaryScreen())
-        self.setMinimumSize(QSize(screen_size.width(), 720))
+        self.setMinimumSize(QSize(screen_size.width(), DISPLAY_HEIGHT))
+        self.setStyleSheet('background-color: #666')
         self.setLayout(layout)
+
+        controls.close_gallery.connect(self.close)
 #################################################################################
 class Display(QScrollArea):
     def __init__(self, gallery) -> None:
         super().__init__()
 
-        f = QFile('~/Programmes/011.(PY)-renommage_photos_ui/renommage_photos_ui/style.qss')
-        f.open(QIODevice.ReadOnly)
-        self.setStyleSheet(QTextStream(f).readAll())
-
         self.setBackgroundRole(QPalette.Dark)
-        self.setStyleSheet('background-color: #303030')
+        self.setStyleSheet('background-color: #808080')
         self.setWidget(gallery)
         self.setWidgetResizable(True)
 #################################################################################
@@ -516,19 +516,20 @@ class Thumbnails(QWidget):
 class Controls(QWidget):
     sliced = Signal(bool)
     cleared = Signal(bool)
+    close_gallery = Signal(bool)
 
     def __init__(self):
         super().__init__()
 
-        # vbox_lbl = QVBoxLayout()
+        btn_close_gallery = QPushButton('Quitter')
+        btn_close_gallery.clicked.connect(self._close_parent)
+
         vbox_btn = QVBoxLayout()
         # add suffix to selection
         btn_slice_date = QPushButton('Ajouter un suffixe à la date de la sélection')
-        # btn_slice_date.setFixedSize(BUTTON_V_SIZE, BUTTON_V_SIZE)
         btn_slice_date.clicked.connect(self._slice)
         # clear checked list
         btn_clear_checked_list = QPushButton('Tout désélectionner')
-        # btn_clear_checked_list.setFixedSize(BUTTON_V_SIZE, BUTTON_V_SIZE)
         btn_clear_checked_list.clicked.connect(self._clear_selection)
 
         # add widgets to vboxes
@@ -550,9 +551,14 @@ class Controls(QWidget):
         self.setLayout(hbox)
         hbox.addStretch()
 
+        layout.addWidget(btn_close_gallery, 0, 1, 2, 1, alignment=Qt.AlignmentFlag.AlignHorizontal_Mask)
         groupbox_op.setLayout(hbox)
 
     # --------------------------------------------------------------------------------
+    @Slot(result=bool)
+    def _close_parent(self, event):
+        self.close_gallery.emit(True)
+
     @Slot(result=bool)
     def _clear_selection(self, event: int):
         self.cleared.emit(True)

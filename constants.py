@@ -37,6 +37,7 @@ MSG_NO_PICTURE = 'Aucun fichier image dans ce répertoire'
 MSG_GROUP_NAME_MISSING = "N'entrez pas un nom vide"
 MSG_END = '==== Terminé ===='
 
+DISPLAY_HEIGHT = 720
 H_SIZE = 1000
 V_SIZE = 600
 MAIN_SIZE = QSize(H_SIZE, V_SIZE)
