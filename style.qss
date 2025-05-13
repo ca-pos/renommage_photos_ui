@@ -10,13 +10,6 @@ QCheckBox::indicator {
     border: 1px solid #eee;
     background-color: #bbb;
 }
-QCheckBox#colored::indicator {
-    width: 18px;
-    height: 18px;
-    border: 1px groove #bbb;
-    border-radius: 9px;
-    image: url(./icons/color.png);
-}
 QPushButton{
     background-color: #777;
 }

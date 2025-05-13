@@ -1,24 +1,29 @@
 import os
-# from pathlib import Path
-# import pyexiv2
 import random
 import re
+import base64
+import io
+# from io import BytesIO
 from functools import partial
-from multiprocessing.process import parent_process
 
-from PySide6.QtWidgets import QWidget, QGridLayout, QVBoxLayout, QGroupBox, QLabel, QPushButton, QHBoxLayout, QApplication
+from PySide6.QtWidgets import QWidget, QGridLayout, QVBoxLayout, QGroupBox, QLabel, QPushButton, QHBoxLayout, \
+    QApplication
 from PySide6.QtGui import QPixmap, QTransform, QPalette, QIcon, QScreen
 from PySide6.QtCore import Qt, Signal, Slot, QFile, QTextStream, QIODevice, QSize
 
 from PySide6.QtWidgets import QScrollArea, QCheckBox, QDialog, QDialogButtonBox
-from PIL import ImageFilter
+from PIL import ImageFilter, Image, ImageQt
 
 from PhotoExif import *
 
 from constants import *
-# from icons import *
+from icons import *
 
+
+# from icons import *
 #################################################################################
+
+
 class AcceptDialog(QDialog):
     def __init__(self):
         super().__init__()
@@ -37,7 +42,11 @@ class AcceptDialog(QDialog):
         layout_v.addWidget(message)
         layout_v.addLayout(layout_h)
         self.setLayout(layout_v)
+
+
 #################################################################################
+
+
 class GalleryDialog(QDialog):
     def __init__(self, pictures):
         super().__init__()
@@ -54,7 +63,11 @@ class GalleryDialog(QDialog):
         self.setLayout(layout)
 
         controls.close_gallery.connect(self.close)
+
+
 #################################################################################
+
+
 class Display(QScrollArea):
     def __init__(self, gallery) -> None:
         super().__init__()
@@ -63,7 +76,11 @@ class Display(QScrollArea):
         self.setStyleSheet('background-color: #808080')
         self.setWidget(gallery)
         self.setWidgetResizable(True)
+
+
 #################################################################################
+
+
 class Gallery(QWidget):
     """
     Gallery creates a widget that contains Thumbnails object
@@ -94,8 +111,9 @@ class Gallery(QWidget):
         self.setLayout(self.layout)
         # create Thumbnails and add to Gallery
         for i_thumb in range(len(fichier_raw)):
+            new_gallery = False if i_thumb else True
             photo_file = fichier_raw[i_thumb]
-            th = Thumbnails(photo_file)
+            th = Thumbnails(photo_file, new_gallery)
             self.layout.addWidget(th)
             th.set_bg_color(self.assign_bg_color(th.rank))
             # process signals from thumbnails
@@ -338,7 +356,11 @@ class Gallery(QWidget):
         # update title
         thumbnail_title = self.w(i).get_thumbnail_title()[:-1] + suffix + ')'
         self.w(i).set_thumbnail_title(thumbnail_title)
+
+
 #################################################################################
+
+
 class Thumbnails(QWidget):
     """
     Thumbnails summary: Thumbnails object comprised
@@ -358,8 +380,10 @@ class Thumbnails(QWidget):
     colored = Signal(str)
     modifier = Qt.KeyboardModifier.NoModifier
     count: int = 0
+    active_yes_pix = ''
+    color_pix = ''
 
-    def __init__(self, photo):
+    def __init__(self, photo, new_gallery):
         """
         __init__ creates Thumbnails objects
 
@@ -385,13 +409,17 @@ class Thumbnails(QWidget):
                 set background color to "color"
         """
         super().__init__()
+        if new_gallery:
+            Thumbnails.count = 0    # new gallery, restart thumbnails count
+            Thumbnails.active_yes_pix = self.decode_base64(active_yes)
+            Thumbnails.color_pix = self.decode_base64(color)
         self.exif = PhotoExif(photo)
-        self.bg_color = '#bbb' #maybe useless, to check
+        self.bg_color = '#bbb'  #maybe useless, to be checked
         self.is_selected = False
         self._full_path_tmp = TMP_DIR + self.exif.original_name + JPG_EXT
         self._full_path_tmp_blurred = TMP_DIR + self.exif.original_name + BLURRED + JPG_EXT
         Thumbnails.count += 1
-        self.rank = Thumbnails.count    # used in gallery to access this thumbnail
+        self.rank = Thumbnails.count  # used in gallery to access this thumbnail
 
         original_name = OriginalName(self._full_path_tmp)
         reversed_date = '/'.join(list(reversed(self.exif.date.split(' ')))) if self.exif.date else ''
@@ -400,34 +428,43 @@ class Thumbnails(QWidget):
         self._label.setStyleSheet('margin: 0px 0px 5px 0px')
         self.set_pixmap(self._full_path_tmp)
 
-        # create the show/hide button (afficher/masquer)
-        self.btn = QPushButton('')
+        # show/hide button (afficher/masquer)
+        self.show_hide_btn = QPushButton('')
         self.update_hide_button(False)
-        self.btn.setCheckable(True)
-        self.btn.setFixedSize(MASK_BUTTON_H_SIZE, BUTTON_V_SIZE)
-        self.btn.clicked.connect(self.hide)
+        self.show_hide_btn.setCheckable(True)
+        self.show_hide_btn.setFixedSize(MASK_BUTTON_H_SIZE, BUTTON_V_SIZE)
+        self.show_hide_btn.clicked.connect(self.hide)
 
-        # creates a checkbox to change bg color
-        self.change_bg_color = QCheckBox()
-        self.change_bg_color.setObjectName('colored')
-        self.change_bg_color.setFixedSize(BUTTON_V_SIZE, BUTTON_V_SIZE)
-        self.change_bg_color.stateChanged.connect(self._change_color)
+        # 100% zoom button
+        self.zoom_btn = QPushButton()
+        self.zoom_btn.setText('Zoom 100%')
+        # self.zoom_btn.setCheckable(True)
+        self.zoom_btn.setStyleSheet('margin-left: 4px; background-color: #808080')
+        self.zoom_btn.setFixedSize(MASK_BUTTON_H_SIZE, BUTTON_V_SIZE)
 
-        # creates a checkbox to select thumbnails
-        self.select = QPushButton()# QCheckBox()
+        # change bg color pushbutton
+        self.change_bg_color_btn = QPushButton()
+        self.change_bg_color_btn.setStyleSheet('border-radius: 10px; border: 0; margin-right: 4px')
+        self.change_bg_color_btn.setIcon(QIcon(QPixmap(self.color_pix)))
+        self.change_bg_color_btn.setFixedSize(QSize(BUTTON_V_SIZE+10, BUTTON_V_SIZE))
+        self.change_bg_color_btn.setIconSize(QSize(BUTTON_V_SIZE, BUTTON_V_SIZE))
+        self.change_bg_color_btn.clicked.connect(self._change_color)
+
+        # checkbox to select thumbnails
+        self.select = QPushButton()  # QCheckBox()
         self.select.setFixedSize(BUTTON_V_SIZE, BUTTON_V_SIZE)
         self.select.clicked.connect(self._selection)
         self.select.setStyleSheet(f'background-color: {self.bg_color}')
         self.select.setIconSize(QSize(ICON_H_SIZE, ICON_V_SIZE))
         self.set_selection(False)
 
-        layout  = QGridLayout()
+        layout = QGridLayout()
         self.setLayout(layout)
 
         self.groupbox = QGroupBox(self.thumbnail_title)
         self.groupbox.setObjectName('thumb')
-        self.groupbox.setFixedHeight(self._pixmap.height()+self.btn.height()+45)
-        self.groupbox.setFixedWidth(int(1.0*self._pixmap.width()))
+        self.groupbox.setFixedHeight(self._pixmap.height() + self.show_hide_btn.height() + 45)
+        self.groupbox.setFixedWidth(int(1.0 * self._pixmap.width()))
         layout.addWidget(self.groupbox)
 
         vbox = QVBoxLayout()
@@ -435,43 +472,52 @@ class Thumbnails(QWidget):
         hbox.setSpacing(0)
         self.groupbox.setLayout(vbox)
         vbox.addWidget(self._label)
-        hbox.addWidget(self.btn, alignment=Qt.AlignmentFlag.AlignLeft)
+        hbox.addWidget(self.show_hide_btn, alignment=Qt.AlignmentFlag.AlignLeft)
+        hbox.addWidget(self.zoom_btn, alignment=Qt.AlignmentFlag.AlignLeft)
         hbox.addStretch()
-        hbox.addWidget(self.change_bg_color, alignment=Qt.AlignmentFlag.AlignRight)
+        hbox.addWidget(self.change_bg_color_btn, alignment=Qt.AlignmentFlag.AlignRight)
         hbox.addWidget(self.select, alignment=Qt.AlignmentFlag.AlignRight)
         vbox.addLayout(hbox)
         vbox.setSpacing(0)
         vbox.addStretch()
-#--------------------------------------------------------------------------------
+
+    #--------------------------------------------------------------------------------
     def get_date_suffix(self):
         return self.exif.date_suffix
-#--------------------------------------------------------------------------------
+
+    #--------------------------------------------------------------------------------
     def get_thumbnail_title(self):
         return self.thumbnail_title
-#--------------------------------------------------------------------------------
+
+    #--------------------------------------------------------------------------------
     def set_thumbnail_title(self, title):
         self.groupbox.setTitle(title)
-#--------------------------------------------------------------------------------
+
+    #--------------------------------------------------------------------------------
     def set_selection(self, flag: bool):
         self.is_selected = flag
         if flag:
-            self.select.setIcon(QIcon('./icons/_active__yes.png'))
+            self.select.setIcon(QIcon(QPixmap(Thumbnails.active_yes_pix)))
         else:
             self.select.setIcon(QIcon(''))
-#--------------------------------------------------------------------------------
+
+    #--------------------------------------------------------------------------------
     def get_selection(self):
         return self.is_selected
-#--------------------------------------------------------------------------------
+
+    #--------------------------------------------------------------------------------
     def blur_pixmap(self):
         if not Path(self._full_path_tmp_blurred).exists():
             img = Image.open(self._full_path_tmp)
             img = img.filter(ImageFilter.GaussianBlur(80))
             img.save(self._full_path_tmp_blurred)
         self.set_pixmap(self._full_path_tmp_blurred)
-#--------------------------------------------------------------------------------
+
+    #--------------------------------------------------------------------------------
     def get_bg_color(self):
         return self.bg_color
-#--------------------------------------------------------------------------------
+
+    #--------------------------------------------------------------------------------
     def set_bg_color(self, color: str):
         """
         set_bg_color set background color
@@ -481,7 +527,8 @@ class Thumbnails(QWidget):
         """
         self.setStyleSheet(f'background-color: {color}')
         self.bg_color = color
-#--------------------------------------------------------------------------------
+
+    #--------------------------------------------------------------------------------
     def set_pixmap(self, pixmap_path: str):
         self._pixmap = QPixmap(pixmap_path)
         if self.exif.orientation == 'portrait':
@@ -489,30 +536,46 @@ class Thumbnails(QWidget):
             self._pixmap = self._pixmap.transformed(transform)
         self._pixmap = self._pixmap.scaled(PIXMAP_SCALE, Qt.AspectRatioMode.KeepAspectRatio)
         self._label.setPixmap(self._pixmap)
-#--------------------------------------------------------------------------------
+
+    #--------------------------------------------------------------------------------
     def update_hide_button(self, blur: bool):
         if blur:
-            self.btn.setStyleSheet('background-color: #e66')
-            self.btn.setText('Afficher')
+            self.show_hide_btn.setStyleSheet('background-color: #e66')
+            self.show_hide_btn.setText('Afficher')
         else:
-            self.btn.setStyleSheet('background-color: #6e6')
-            self.btn.setText('Masquer')
-#--------------------------------------------------------------------------------
+            self.show_hide_btn.setStyleSheet('background-color: #6e6')
+            self.show_hide_btn.setText('Masquer')
+
+    #--------------------------------------------------------------------------------
+    @staticmethod
+    def decode_base64(pix64):
+        decoded_string = io.BytesIO(base64.b64decode(pix64))
+        img = Image.open(decoded_string)
+        img2 = ImageQt.ImageQt(img)
+        return img2
+
+    #--------------------------------------------------------------------------------
     @Slot(result=bool)
     def _selection(self, e: int):
         self.selected.emit(True)
+
     @Slot(result=str)
     def _change_color(self, e: int):
         self.colored.emit(self.rank)
+
     @Slot(result=str)
     def hide(self):
-        if self.btn.isChecked():
+        if self.show_hide_btn.isChecked():
             self.blur_pixmap()
             self.update_hide_button(True)
         else:
             self.set_pixmap(self._full_path_tmp)
             self.update_hide_button(False)
+
+
 #################################################################################
+
+
 class Controls(QWidget):
     sliced = Signal(bool)
     cleared = Signal(bool)
@@ -538,7 +601,7 @@ class Controls(QWidget):
 
         layout = QGridLayout()
         self.setLayout(layout)
-        groupbox_op = QGroupBox('Opérations')
+        groupbox_op = QGroupBox('Opérations sur la sélection')
         groupbox_op.setObjectName('ctrl1')
         groupbox_op.setFixedSize(int(.3 * H_SIZE), 100)
         layout.addWidget(groupbox_op)
@@ -566,9 +629,14 @@ class Controls(QWidget):
     @Slot(result=bool)
     def _slice(self, event: int):
         self.sliced.emit(True)
+
+
 #################################################################################
+
+
 class OriginalName:
     '''Try to find the original name of the file'''
+
     def __init__(self, current_ext):
         """
         :param current_name: name of the file in which the original is to be found

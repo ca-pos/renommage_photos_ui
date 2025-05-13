@@ -51,7 +51,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # note: if more types are added, 'rb_all' must remain the last one
         self.type_radiobuttons_dict = {NEF_TXT: self.rb_nef, JPG_TXT: self.rb_jpg, ALL_TXT: self.rb_all}
 
-        # initialize date suffix combobox
+        # initialize date suffix combobox. TODO: probably no needed any longer
         self.cbx_date_suffix.setPlaceholderText('Choisir')
         self.cbx_date_suffix.addItem('Aucun')
         self.cbx_date_suffix.setCurrentIndex(3)
@@ -78,17 +78,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     @Slot()
     def prepare_task(self, btn_id):
         """
-        'prepare' common trunk for all tasks (select folder and set searched type(s) according to its content)
-        :param btn_id: int: task id
-        :return: None
+        Summary
+            'prepare' common trunk for all tasks (select folder and set searched type(s) according to its content)
+        Args
+            btn_id: int: task id
+        Return
+            None
         """
-        self.task_to_do = btn_id
+        self.pictures_list = [] # force reading in 'execute' or 'show_gallery' to get rid of ancient values
+        self.task_to_do = btn_id    # for later use by 'execute' function
         files_list = self.open_dir()
         if files_list:
             type_list = self.examine_list(files_list)    # find folder content, NEF, JPG, etc.
         else:   # no file in the folder ou 'NO' response from the user
             return
-        self.files_list = files_list
+        self.files_list = files_list    # TODO: self.file_list could be set from self.open_dir !
         self.set_searched_type(type_list)           # set searched type according to folder content
         if self.content_info(type_list):            # display info about directory content
             self.btn_exec.setEnabled(True)          # enable exec and gallery buttons ...
@@ -113,6 +117,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if bool(self.type_filters[NEF_TXT].match(ext)): # nef file found
                 if not jpeg_filename in self.pictures_in_tmp:    # jpeg not yet in TMP_DIR
                     print(f'Création du JPEG ... {jpeg_filename}')
+                    print('jjj', jpeg_filename)
                     self.create_temporary_jpeg(photo, jpeg_filename)    # create jpeg from NEF photo
             elif bool(self.type_filters[JPG_TXT].match(ext)):
                 shutil.copy(photo, jpeg_filename)
@@ -136,43 +141,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def import_card(self):
         print('Importer (tâche ', self.task_to_do, ')')
-        rank = 1
 
-    # def rename_pictures(self):
-    #     group_name = self.edt_gname.text()
-    #     # these parts which are the same for all pictures are taken from the first one
-    #     #   target directory : STEP1 / decade / parent folder
-    #     #   where parent folder = compressed date + '-' + group name
-    #     photo = PhotoExif(self.pictures_list[0])
-    #     photo_date = photo.date
-    #     photo_compressed_date = photo.compressed_date
-    #     decade = photo_compressed_date[0]
-    #     date = '(' + photo_date.replace(' ', '-') + ')_'
-    #     date_suffix = self.cbx_date_suffix.currentText()
-    #     if date_suffix == 'Aucun':
-    #         date_suffix = ''
-    #     compressed_date = ''.join(photo_compressed_date[1:3]) + date_suffix
-    #     group_name = self.suppress_spaces(group_name).replace(' ', '-').lower()
-    #     parent_folder = compressed_date + '-' + group_name
-    #     ext = photo.original_suffix
-    #     directory = STEP_1 + decade + '/' + parent_folder
-    #     os.makedirs(directory + '/', exist_ok=True)
-    #
-    #     rank = 1
-    #     for picture in self.pictures_list:
-    #         photo = PhotoExif(picture)
-    #         rank_str = str("{:03d}".format(rank)) + '_'
-    #         camera_name = '['+photo.original_name+']_'
-    #         rank += 1
-    #         new_name = date + rank_str + camera_name + group_name + ext
-    #         shutil.copy(picture, directory + '/' + new_name)    # ----> replace with move
-    #
-    #     self.console.clear()
-    #     self.console.addItem(MSG_END.upper())
-    #     self.activate_all_buttons(False)
-
-    # def correct_names(self):
-    #     pass
+    def correct_names(self):
+        pass
 
     def content_info(self, type_list):
         """
@@ -196,8 +167,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def open_dir(self):
         """
-        Open directory containing the pictures to process
-        :return: list: list of all the files in the directory, excluding subdirectories
+        Summary
+            Open directory containing the pictures to process
+        Return
+            list: list of all the files in the directory, excluding subdirectories
         """
         # open the dialog window for folder selection
         file_dialog = QFileDialog(self)
@@ -211,7 +184,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.console.addItem( 'Contenu du répertoire : ' + selected_directory) # and display it
         else:   # cancel button was pressed by user
             return
-        # display the content of the folder in lst_files display and save it in file_list
+        # display the content of the folder in console and save it in file_list
         file_list = list()
         for file in os.listdir('.'):
             if not os.path.isdir(file):
@@ -230,7 +203,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if not dlg.exec(): # not the right directory, returned list is emptied
             file_list = []
 
-        return file_list
+        return file_list # all files, pictures and others
 
     def set_searched_type(self, type_list):
         """
@@ -271,8 +244,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def create_pictures_list(self):
         """
-        read 'file_list', applies filter(s), and writes 'file' in 'pictures_list' if match
-        :return: list: selected pictures (nef, jpg, [etc., provision for adding more type in the future] or all)
+        Summary
+            read 'self.file_list', applies filter(s), and writes 'file' in 'pictures_list' if match
+        Return
+            list: selected pictures (nef, jpg, [etc., provision for adding more type in the future] or all)
         """
         pictures_list = list()
         filters = self.get_searched_type_filters()
@@ -308,40 +283,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.write_console(msg)
         # return
 
-    def create_temporary_jpeg(self, photo, jpeg_filename):
-        """
-        Summary
-            create_thumb_jpeg: Creates temporary jpeg pictures from NEF. Needed for Gallery
-        """
-        photo_exif = PhotoExif(photo)
-        year, month, day, hour, minute, second = list(map(int, photo_exif.date_time.split()))
-        datetime_taken = datetime.datetime(year, month, day, hour, minute, second)
-
-        with rawpy.imread(photo) as raw:
-            jpeg_img = raw.postprocess()
-        imageio.imsave(jpeg_filename, jpeg_img)
-        meta_data = pyexiv2.ImageMetadata(jpeg_filename)
-        meta_data.read()
-        key = 'Exif.Photo.DateTimeOriginal'
-        meta_data[key] = datetime_taken
-        meta_data.write()
-
-        return
-        if self.searched_type:
-            for i in range(0, len(self.pictures_list)):
-                shutil.copy(self.pictures_list[i], TMP_DIR)
-        else:
-            for i in range(0, len(self.pictures_list)):
-                photo_file = self.pictures_list[i]
-                photo_exif = PhotoExif(photo_file)
-                full_path_for_thumb = TMP_DIR + photo_exif.original_name + '.jpeg'
-                print(full_path_for_thumb)
-                # file_path = './pictures/' + photos_test[i]
-                with rawpy.imread(photo_file) as raw:
-                    thumb = raw.extract_thumb()
-                with open(full_path_for_thumb, 'wb') as file:
-                    file.write(thumb.data)
-
     def examine_list(self, file_list):
         """
         check the type of pictures in file_list, NEF, JPG, both or none
@@ -349,15 +290,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         :return: list(bool): telling the types of files found in 'file_list'
         """
         type_list = [False]*(len(self.type_radiobuttons_dict) - 1) # will allow more types in the future
-        filters = self.get_type_filters()
-        # for k, v in filters.items():
-        #     print('---', k, v)
         for file in file_list:
             tmp, ext = os.path.splitext(file)
-            for index in range(len(filters)):
-                if bool(filters[TXT_TYPES_LIST[index]].match(ext)):  # filter
+            for index in range(len(self.type_filters)):
+                if bool(self.type_filters[TXT_TYPES_LIST[index]].match(ext)):  # filter
                     type_list[index] = True
-            if type_list[0] and all(type_list): #type_list[0] and all others are True no need to go any further
+            if type_list[0] and all(type_list): # type_list[0] and all others are True no need to go any further
                 return type_list
         return type_list
 
@@ -417,6 +355,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             string_ = string_.replace("  ", " ")  # replace double spaces with single space
 
         return string_
+
+    @staticmethod
+    def create_temporary_jpeg(photo, jpeg_filename):
+        """
+        Summary
+            create temporary jpeg: Creates temporary jpeg pictures from NEF. Needed for Gallery
+        """
+        photo_exif = PhotoExif(photo)
+        year, month, day, hour, minute, second = list(map(int, photo_exif.date_time.split()))
+        datetime_taken = datetime.datetime(year, month, day, hour, minute, second)
+
+        with rawpy.imread(photo) as raw:
+            jpeg_img = raw.postprocess()
+            # thumb = raw.extract_thumb()
+        imageio.imsave(jpeg_filename, jpeg_img)
+        meta_data = pyexiv2.ImageMetadata(jpeg_filename)
+        meta_data.read()
+        key = 'Exif.Photo.DateTimeOriginal'
+        meta_data[key] = datetime_taken
+        meta_data.write()
+
 
 
 if __name__ == '__main__':

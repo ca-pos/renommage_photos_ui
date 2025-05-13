@@ -11,6 +11,7 @@ ALL_ID = 99
 
 NEF_EXT = '.NEF'
 JPG_EXT = '.JPG'
+
 NEF_TXT = 'NEF'
 JPG_TXT = 'JPG/JPEG'
 ALL_TXT = 'Tout'
