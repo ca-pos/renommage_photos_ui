@@ -9,12 +9,13 @@ from functools import partial
 from PySide6.QtWidgets import QWidget, QGridLayout, QVBoxLayout, QGroupBox, QLabel, QPushButton, QHBoxLayout, \
     QApplication
 from PySide6.QtGui import QPixmap, QTransform, QPalette, QIcon, QScreen
-from PySide6.QtCore import Qt, Signal, Slot, QFile, QTextStream, QIODevice, QSize
+from PySide6.QtCore import Qt, Signal, Slot
 
-from PySide6.QtWidgets import QScrollArea, QCheckBox, QDialog, QDialogButtonBox
-from PIL import ImageFilter, Image, ImageQt
+from PySide6.QtWidgets import QScrollArea, QDialog, QDialogButtonBox
+from PIL import ImageFilter, ImageQt
 
 from PhotoExif import *
+from ImageViewer import ImageViewer
 
 from constants import *
 from icons import *
@@ -439,8 +440,9 @@ class Thumbnails(QWidget):
         self.zoom_btn = QPushButton()
         self.zoom_btn.setText('Zoom 100%')
         # self.zoom_btn.setCheckable(True)
-        self.zoom_btn.setStyleSheet('margin-left: 4px; background-color: #808080')
+        self.zoom_btn.setStyleSheet('margin-left: 4px; background-color: #6e6')
         self.zoom_btn.setFixedSize(MASK_BUTTON_H_SIZE, BUTTON_V_SIZE)
+        self.zoom_btn.clicked.connect(self.show_zoom)
 
         # change bg color pushbutton
         self.change_bg_color_btn = QPushButton()
@@ -571,6 +573,12 @@ class Thumbnails(QWidget):
         else:
             self.set_pixmap(self._full_path_tmp)
             self.update_hide_button(False)
+
+    @Slot()
+    def show_zoom(self):
+        print('show zoom', self._full_path_tmp)
+        zoom = ImageViewer(self._full_path_tmp)
+        zoom.exec()
 
 
 #################################################################################

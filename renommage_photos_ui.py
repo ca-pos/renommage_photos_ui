@@ -14,6 +14,7 @@ import pathlib
 from functools import partial
 
 from PySide6.QtWidgets import (QMainWindow, QFileDialog, QButtonGroup)
+from PySide6.QtCore import QFile, QIODevice, QTextStream
 
 from interface import Ui_MainWindow
 from CustomClasses import *

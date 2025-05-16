@@ -52,6 +52,9 @@ HI_RES = QSize(600, 600)
 PIXMAP_MAX_SIZE = 450
 PIXMAP_SCALE = QSize(PIXMAP_MAX_SIZE, PIXMAP_MAX_SIZE)
 
+ZOOM_IN_RATIO = 1.15
+ZOOM_OUT_RATIO = .9
+
 
 # size of iphone jpeg: (1354, 2323)
 # size of NEF-embedded thumb (6000, 4000)
