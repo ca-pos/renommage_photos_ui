@@ -17,7 +17,7 @@ class ImageViewer(QDialog):
         self._scroll_area = QScrollArea()
         self._scroll_area.setWidget(self._image_label)
         
-        btn_quit = QPushButton('Quitter')
+        btn_quit = QPushButton('Fermer')
         btn_quit.clicked.connect(self.close)
         btn_original_size = QPushButton('Taille originale')
         btn_original_size.clicked.connect(self._original_size)

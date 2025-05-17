@@ -1,4 +1,5 @@
 import os
+import sys
 import random
 import re
 import base64
@@ -438,7 +439,7 @@ class Thumbnails(QWidget):
 
         # 100% zoom button
         self.zoom_btn = QPushButton()
-        self.zoom_btn.setText('Zoom 100%')
+        self.zoom_btn.setText('Zoom')
         # self.zoom_btn.setCheckable(True)
         self.zoom_btn.setStyleSheet('margin-left: 4px; background-color: #6e6')
         self.zoom_btn.setFixedSize(MASK_BUTTON_H_SIZE, BUTTON_V_SIZE)
@@ -665,3 +666,15 @@ class OriginalName:
         """Essai de retrouver le le nom original du fichier"""
         return self._original_name
 #################################################################################
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    os.chdir('/home/camille/_cm_nef/')
+    pictures = os.listdir('./tmp')
+    pictures = ['./tmp/' + val for val in pictures]
+
+    gallery_dialog = GalleryDialog(pictures)
+    gallery_dialog.show()
+
+    sys.exit(app.exec())
