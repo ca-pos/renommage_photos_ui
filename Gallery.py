@@ -52,12 +52,20 @@ class Gallery(QWidget):
             # process signals from thumbnails
             th.selected.connect(partial(self.thumb_selected, th.rank))
             th.colored.connect(partial(self.change_group_bg_color, th.rank))
+            th.zoom.suppress.connect(self.suppress_picture)
         # process signals from controls
         controls.sliced.connect(self.slice_date)
         controls.cleared.connect(self.clear_selection)
 
         # b = self.layout.takeAt(3)
         # b.widget().deleteLater()
+
+    # --------------------------------------------------------------------------------
+    def suppress_picture(self, thumb):
+        print('SUPPRESS', thumb)
+        to_suppress = self.layout.takeAt(thumb)
+        to_suppress.widget().deleteLater()
+        # TODO: update picture list & update thumb rank
 
     # --------------------------------------------------------------------------------
     def slice_date(self):

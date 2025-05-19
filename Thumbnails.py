@@ -1,10 +1,10 @@
 import base64
 import io
+from functools import partial
 #
 from PySide6.QtWidgets import (QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox)
-# from PySide6.QtGui import QPixmap, QTransform, QPalette, QIcon, QScreen
-from PySide6.QtGui import (QPixmap, QIcon)
-# from PySide6.QtCore import Qt, Signal, Slot
+# from PySide6.QtGui import QPalette, QScreen
+from PySide6.QtGui import (QPixmap, QIcon, QTransform)
 from PySide6.QtCore import (Slot, Signal, Qt)
 #
 from PIL import (ImageQt, ImageFilter)
@@ -16,6 +16,7 @@ from ImageViewer import ImageViewer
 from icons import (active_yes, color)
 from constants import *
 #
+
 
 class Thumbnails(QWidget):
     """
@@ -47,7 +48,7 @@ class Thumbnails(QWidget):
             photo: str
                 path to RAW file
             blur: str
-                whether or not the displayed JPEG should be blurred: clear = empty string, blurred = BLURRED constant
+                whether the displayed JPEG should be blurred: clear = empty string, blurred = BLURRED constant
 
             id: int
                 id number
@@ -76,6 +77,8 @@ class Thumbnails(QWidget):
         self._full_path_tmp_blurred = TMP_DIR + self.exif.original_name + BLURRED + JPG_EXT
         Thumbnails.count += 1
         self.rank = Thumbnails.count  # used in gallery to access this thumbnail
+
+        self.zoom = ImageViewer(self._full_path_tmp, self.rank)
 
         original_name = OriginalName(self._full_path_tmp)
         reversed_date = '/'.join(list(reversed(self.exif.date.split(' ')))) if self.exif.date else ''
@@ -138,19 +141,19 @@ class Thumbnails(QWidget):
         vbox.setSpacing(0)
         vbox.addStretch()
 
-    #--------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------
     def get_date_suffix(self):
         return self.exif.date_suffix
 
-    #--------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------
     def get_thumbnail_title(self):
         return self.thumbnail_title
 
-    #--------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------
     def set_thumbnail_title(self, title):
         self.groupbox.setTitle(title)
 
-    #--------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------
     def set_selection(self, flag: bool):
         self.is_selected = flag
         if flag:
@@ -158,11 +161,11 @@ class Thumbnails(QWidget):
         else:
             self.select.setIcon(QIcon(''))
 
-    #--------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------
     def get_selection(self):
         return self.is_selected
 
-    #--------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------
     def blur_pixmap(self):
         if not Path(self._full_path_tmp_blurred).exists():
             img = Image.open(self._full_path_tmp)
@@ -170,11 +173,11 @@ class Thumbnails(QWidget):
             img.save(self._full_path_tmp_blurred)
         self.set_pixmap(self._full_path_tmp_blurred)
 
-    #--------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------
     def get_bg_color(self):
         return self.bg_color
 
-    #--------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------
     def set_bg_color(self, color: str):
         """
         set_bg_color set background color
@@ -185,7 +188,7 @@ class Thumbnails(QWidget):
         self.setStyleSheet(f'background-color: {color}')
         self.bg_color = color
 
-    #--------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------
     def set_pixmap(self, pixmap_path: str):
         self._pixmap = QPixmap(pixmap_path)
         if self.exif.orientation == 'portrait':
@@ -194,7 +197,7 @@ class Thumbnails(QWidget):
         self._pixmap = self._pixmap.scaled(PIXMAP_SCALE, Qt.AspectRatioMode.KeepAspectRatio)
         self._label.setPixmap(self._pixmap)
 
-    #--------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------
     def update_hide_button(self, blur: bool):
         if blur:
             self.show_hide_btn.setStyleSheet('background-color: #e66')
@@ -203,15 +206,7 @@ class Thumbnails(QWidget):
             self.show_hide_btn.setStyleSheet('background-color: #6e6')
             self.show_hide_btn.setText('Masquer')
 
-    #--------------------------------------------------------------------------------
-    @staticmethod
-    def decode_base64(pix64):
-        decoded_string = io.BytesIO(base64.b64decode(pix64))
-        img = Image.open(decoded_string)
-        img2 = ImageQt.ImageQt(img)
-        return img2
-
-    #--------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------
     @Slot(result=bool)
     def _selection(self, e: int):
         self.selected.emit(True)
@@ -231,8 +226,19 @@ class Thumbnails(QWidget):
 
     @Slot()
     def show_zoom(self):
-        print('show zoom', self._full_path_tmp)
-        zoom = ImageViewer(self._full_path_tmp)
-        zoom.exec()
+        # print('show zoom', self._full_path_tmp)
+        # self.zoom.suppress.connect(self._suppress_thumb)
+        self.zoom.exec()
 
+    # @Slot()
+    # def _suppress_thumb(self, thumb):
+    #     print('sss', thumb)
+
+    # --------------------------------------------------------------------------------
+    @staticmethod
+    def decode_base64(pix64):
+        decoded_string = io.BytesIO(base64.b64decode(pix64))
+        img = Image.open(decoded_string)
+        img2 = ImageQt.ImageQt(img)
+        return img2
 

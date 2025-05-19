@@ -1,21 +1,20 @@
-# import sys
 #
-# from PySide6.QtWidgets import QApplication, QLabel, QScrollArea, QHBoxLayout, QVBoxLayout, QPushButton, QDialog
 from PySide6.QtWidgets import (QDialog, QLabel, QScrollArea, QPushButton, QHBoxLayout, QVBoxLayout)
-# from PySide6.QtGui import QGuiApplication, QImageReader, QPixmap
 from PySide6.QtGui import (QGuiApplication, QImageReader, QPixmap)
-# from PySide6.QtCore import Qt
-from PySide6.QtCore import Qt
+from PySide6.QtCore import (Qt, Signal)
 #
 from constants import *
-
+#
 class ImageViewer(QDialog):
-    def __init__(self, file_name, parent=None):
+    suppress = Signal(int)
+    def __init__(self, file_name, rank):
         super().__init__()
+        self._rank = rank
         self._scale_factor = 1
         self._image_label = QLabel()
         self._image_label.setScaledContents(True)
         self._original_pixmap_size = 0
+        self._file_name = file_name
 
         self._scroll_area = QScrollArea()
         self._scroll_area.setWidget(self._image_label)
@@ -49,7 +48,7 @@ class ImageViewer(QDialog):
         available_size = QGuiApplication.primaryScreen().availableSize()
         self.resize(available_size)
 
-        reader = QImageReader(file_name)
+        reader = QImageReader(self._file_name)
         # reader.setAutoTransform(True)
         new_image = reader.read()
 
@@ -80,7 +79,8 @@ class ImageViewer(QDialog):
         self._scale_factor = 1.0
 
     def _suppress_picture(self):
-        pass
+
+        self.suppress.emit(self._rank)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
