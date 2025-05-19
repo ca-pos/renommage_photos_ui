@@ -1,9 +1,12 @@
-import sys
-
-from PySide6.QtWidgets import QApplication, QLabel, QScrollArea, QHBoxLayout, QVBoxLayout, QPushButton, QDialog
-from PySide6.QtGui import QGuiApplication, QImageReader, QPixmap
+# import sys
+#
+# from PySide6.QtWidgets import QApplication, QLabel, QScrollArea, QHBoxLayout, QVBoxLayout, QPushButton, QDialog
+from PySide6.QtWidgets import (QDialog, QLabel, QScrollArea, QPushButton, QHBoxLayout, QVBoxLayout)
+# from PySide6.QtGui import QGuiApplication, QImageReader, QPixmap
+from PySide6.QtGui import (QGuiApplication, QImageReader, QPixmap)
+# from PySide6.QtCore import Qt
 from PySide6.QtCore import Qt
-
+#
 from constants import *
 
 class ImageViewer(QDialog):
@@ -27,7 +30,7 @@ class ImageViewer(QDialog):
         btn_zoom_out.clicked.connect(self._zoom_out)
         btn_suppress = QPushButton('Supprimer')
         btn_suppress.clicked.connect(self._suppress_picture)
-        btn_suppress.setEnabled(False)  # TODO: emit a signal to suppress picture in gallery
+        btn_suppress.setEnabled(True)  # TODO: emit a signal to suppress picture in gallery
 
 
         layout = QHBoxLayout()

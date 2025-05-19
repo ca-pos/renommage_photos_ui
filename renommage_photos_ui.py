@@ -1,25 +1,25 @@
-import os
-# import re
+# import os
+# # import re
+# # from functools import partial
+# # from PySide6.QtCore import Slot, Qt, QIODevice
+# #from PhotoExif import *
+# from os.path import abspath, basename
+# import sys
+# import shutil
+# import rawpy
+# import imageio
+# import pyexiv2
+# import datetime
+# import pathlib
 # from functools import partial
-# from PySide6.QtCore import Slot, Qt, QIODevice
-#from PhotoExif import *
-from os.path import abspath, basename
-import sys
-import shutil
-import rawpy
-import imageio
-import pyexiv2
-import datetime
-import pathlib
-from functools import partial
-
-from PySide6.QtWidgets import (QMainWindow, QFileDialog, QButtonGroup)
-from PySide6.QtCore import QFile, QIODevice, QTextStream
-
-from interface import Ui_MainWindow
-from CustomClasses import *
-
-from constants import *
+#
+# from PySide6.QtWidgets import (QMainWindow, QFileDialog, QButtonGroup)
+# from PySide6.QtCore import QFile, QIODevice, QTextStream, Slot
+#
+# from interface import Ui_MainWindow
+#
+#
+# from constants import *
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):

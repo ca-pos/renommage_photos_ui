@@ -1,9 +1,13 @@
-import os
+# import os
+# from pathlib import Path
 from pathlib import Path
+# import string
 import string
+# import pyexiv2
 import pyexiv2
+# from PIL import Image
 from PIL import Image
-
+#
 class PhotoExif:
     """
     PhotoExif object contains the exif information necessary for the present program and a compressed version of the original date
