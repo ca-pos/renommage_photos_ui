@@ -1,8 +1,8 @@
 import sys, os
 import re
 
-from PySide6.QtWidgets import (QApplication, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox, QDialog, QScrollArea)
-from PySide6.QtWidgets import (QWidget)
+from PySide6.QtWidgets import (QApplication, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox, QDialog,
+                               QScrollArea, QDialogButtonBox, QLabel, QWidget)
 # from PySide6.QtGui import QPixmap, QTransform, QPalette, QIcon, QScreen
 from PySide6.QtGui import (QPalette, QScreen)
 # from PySide6.QtCore import Qt, Signal, Slot
@@ -31,9 +31,7 @@ class AcceptDialog(QDialog):
         layout_v.addLayout(layout_h)
         self.setLayout(layout_v)
 
-
 #################################################################################
-
 
 class GalleryDialog(QDialog):
     def __init__(self, pictures):
@@ -41,8 +39,10 @@ class GalleryDialog(QDialog):
 
         from Gallery import Gallery # imported here to avoid circular import problem
 
+        self._pictures = pictures
+
         controls = Controls()
-        gallery = Gallery(controls, pictures)
+        gallery = Gallery(controls, self._pictures)
         display = Display(gallery)
         layout = QVBoxLayout()
         layout.addWidget(display)
@@ -52,11 +52,15 @@ class GalleryDialog(QDialog):
         self.setStyleSheet('background-color: #666')
         self.setLayout(layout)
 
-        controls.close_gallery.connect(self.close)
+        # controls.close_gallery.connect(self.close) # <<<<<<<<<<<<<< close gallery using default close
 
+        controls.close_gallery.connect(self.update_and_close)
+
+    def update_and_close(self):
+        print('update and close', self._pictures) #<<<
+        self.close()
 
 #################################################################################
-
 
 class Display(QScrollArea):
     def __init__(self, gallery) -> None:
@@ -67,11 +71,7 @@ class Display(QScrollArea):
         self.setWidget(gallery)
         self.setWidgetResizable(True)
 
-
 #################################################################################
-
-#################################################################################
-
 
 class Controls(QWidget):
     sliced = Signal(bool)
@@ -127,12 +127,10 @@ class Controls(QWidget):
     def _slice(self, event: int):
         self.sliced.emit(True)
 
-
 #################################################################################
 
-
 class OriginalName:
-    '''Try to find the original name of the file'''
+    """Try to find the original name of the file"""
 
     def __init__(self, current_ext):
         """
@@ -151,10 +149,10 @@ class OriginalName:
 
     @property
     def original_name(self):
-        """Essai de retrouver le le nom original du fichier"""
+        """Essai de retrouver le nom original du fichier"""
         return self._original_name
-#################################################################################
 
+#################################################################################
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

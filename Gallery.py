@@ -1,15 +1,10 @@
 import random
 import string
 
-# import io
-# # from io import BytesIO
-
 from functools import partial
 
 from PySide6.QtWidgets import (QWidget, QHBoxLayout)
-# from PySide6.QtGui import QPixmap, QTransform, QPalette, QIcon, QScreen
-# from PySide6.QtCore import Qt, Signal, Slot
-# from PIL import ImageFilter, ImageQt
+from PySide6.QtCore import Slot
 
 from Thumbnails import Thumbnails
 
@@ -27,11 +22,14 @@ class Gallery(QWidget):
         hidden_list: list of the thumbnails to be displayed blurred
     """
 
-    def __init__(self, controls, fichier_raw):
+    def __init__(self, controls, fichier_tmp_jpg):
         """
         __init__ creates Gallery objects
         """
         super().__init__()
+
+        self._fichier_tmp_jpg = fichier_tmp_jpg
+
         self.first = -1
         self.last = -1
         self.list_set = False
@@ -42,12 +40,13 @@ class Gallery(QWidget):
         self.layout.addStretch()
         self.setLayout(self.layout)
         # create Thumbnails and add to Gallery
-        for i_thumb in range(len(fichier_raw)):
+        for i_thumb in range(len(self._fichier_tmp_jpg)):
             new_gallery = False if i_thumb else True    # if new_gallery, restart thumbnails count
-            photo_file = fichier_raw[i_thumb]
+            photo_file = self._fichier_tmp_jpg[i_thumb]
             th = Thumbnails(photo_file, new_gallery)
             self.layout.addWidget(th)
-            # print('iii', self.layout.indexOf(th), th.rank)
+            th.rank = self.layout.indexOf(th)
+            th.update_zoom()
             th.set_bg_color(self.assign_bg_color(th.rank))
             # process signals from thumbnails
             th.selected.connect(partial(self.thumb_selected, th.rank))
@@ -57,15 +56,20 @@ class Gallery(QWidget):
         controls.sliced.connect(self.slice_date)
         controls.cleared.connect(self.clear_selection)
 
-        # b = self.layout.takeAt(3)
-        # b.widget().deleteLater()
-
     # --------------------------------------------------------------------------------
+    @Slot()
     def suppress_picture(self, thumb):
-        print('SUPPRESS', thumb)
+        # print('SUPPRESS', thumb)
         to_suppress = self.layout.takeAt(thumb)
         to_suppress.widget().deleteLater()
-        # TODO: update picture list & update thumb rank
+        if not thumb == len(self._fichier_tmp_jpg):
+            self.w(thumb).update_zoom()
+        del self._fichier_tmp_jpg[thumb-1]
+        # update rank of shifted thumbnails
+        for index in range(thumb, len(self._fichier_tmp_jpg)+1):
+            self.w(index).rank = index
+            print('sss', self.w(index).exif.original_name, self.w(index).exif.file) #<<<
+        # print('lll', len(self._fichier_tmp_jpg)) #<<<
 
     # --------------------------------------------------------------------------------
     def slice_date(self):
@@ -110,7 +114,8 @@ class Gallery(QWidget):
     # --------------------------------------------------------------------------------
     def initialize_all_dates(self, first):
         items_per_date = list()
-        for i in range(1, Thumbnails.count + 1):
+        count = len(self._fichier_tmp_jpg)
+        for i in range(1, count + 1):
             if self.w(i).exif.date == self.w(first).exif.date:
                 items_per_date.append(i)
         for i in items_per_date:
@@ -127,7 +132,7 @@ class Gallery(QWidget):
     # --------------------------------------------------------------------------------
     def different_dates(self) -> int:
         """
-        different_dates checks if the selecter items lies across date boundary
+        different_dates checks if the selected item lies across date boundary
 
         Returns:
             int:
@@ -217,13 +222,6 @@ class Gallery(QWidget):
                 self.w(i).set_bg_color(bg_color)
 
     # --------------------------------------------------------------------------------
-    def new_color(self):
-        red = random.randint(0, 255)
-        green = random.randint(0, 255)
-        blue = random.randint(0, 255)
-        return '#%02x%02x%02x' % (red, green, blue)
-
-    # --------------------------------------------------------------------------------
     def in_list_ok(self, rank):
         ok = list()
         ok.append(self.checked_list[0])
@@ -252,17 +250,11 @@ class Gallery(QWidget):
             return 'a'
         else:
             previous = self.w(first_index - 1).exif.date_suffix
-            print('prev1', previous)
+            print('prev1', previous)    #<<<
             if not previous:
-                print('Erreur de début')
+                print('Erreur de début')    #<<<
                 return ''
             return self.get_next_letter(previous)
-
-    # --------------------------------------------------------------------------------
-    def get_next_letter(self, letter):
-        letters = string.ascii_lowercase
-        print('gnext', letter, letters)
-        return letters[letters.index(letter) + 1]
 
     # --------------------------------------------------------------------------------
     def update_checked_list(self, item: int):
@@ -278,10 +270,9 @@ class Gallery(QWidget):
         print('upd lst', self.checked_list)
 
     # --------------------------------------------------------------------------------
-    def w(self, rank: int):
+    def w(self, rank: int): # just a shorthand
         return self.layout.itemAt(rank).widget()
 
-    # --------------------------------------------------------------------------------
     # --------------------------------------------------------------------------------
     def update_next_item_date(self, original_date, suffix):
         next_suffix = self.get_next_letter(suffix)
@@ -291,7 +282,7 @@ class Gallery(QWidget):
                 if first == -1:
                     first = i
                 self.update_thumbnail_date(i, next_suffix)
-        print('i', first)
+        print('iii', first)
 
     # --------------------------------------------------------------------------------
     def update_thumbnail_date(self, i, suffix):
@@ -301,4 +292,24 @@ class Gallery(QWidget):
         thumbnail_title = self.w(i).get_thumbnail_title()[:-1] + suffix + ')'
         self.w(i).set_thumbnail_title(thumbnail_title)
 
+    @staticmethod
+    def new_color():
+        """
+        Summary
+            generate a random color as a hexadecimal constant
+        Returns:
+            rgb color: str
+        """
+        red = random.randint(0, 255)
+        green = random.randint(0, 255)
+        blue = random.randint(0, 255)
+        return '#%02x%02x%02x' % (red, green, blue)
 
+    # --------------------------------------------------------------------------------
+    @staticmethod
+    def get_next_letter(self, letter):
+        letters = string.ascii_lowercase
+        print('gnext', letter, letters)
+        return letters[letters.index(letter) + 1]
+
+    # --------------------------------------------------------------------------------

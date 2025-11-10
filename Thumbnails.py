@@ -36,7 +36,7 @@ class Thumbnails(QWidget):
     selected = Signal(bool)
     colored = Signal(str)
     modifier = Qt.KeyboardModifier.NoModifier
-    count: int = 0
+    count: int = 0      # probably useless now (more tests needed)
     active_yes_pix = ''
     color_pix = ''
 
@@ -67,20 +67,26 @@ class Thumbnails(QWidget):
         """
         super().__init__()
         if new_gallery:
-            Thumbnails.count = 0    # new gallery, restart thumbnails count
+            # Thumbnails.count = 0    # new gallery, restart thumbnails count
             Thumbnails.active_yes_pix = self.decode_base64(active_yes)
             Thumbnails.color_pix = self.decode_base64(color)
         self.exif = PhotoExif(photo)
         self.bg_color = '#bbb'  #maybe useless, to be checked
         self.is_selected = False
+        self.is_blurred = False
         self._full_path_tmp = TMP_DIR + self.exif.original_name + JPG_EXT
         self._full_path_tmp_blurred = TMP_DIR + self.exif.original_name + BLURRED + JPG_EXT
         Thumbnails.count += 1
-        self.rank = Thumbnails.count  # used in gallery to access this thumbnail
-
-        self.zoom = ImageViewer(self._full_path_tmp, self.rank)
+        # self.rank = Thumbnails.count  # used in gallery to access this thumbnail
+        self._rank = -1
 
         original_name = OriginalName(self._full_path_tmp)
+        get_file_flag = TMP_DIR + original_name.original_name + GET_EXT
+        print('gffgff', get_file_flag)  #<<<
+        with open(get_file_flag, 'w') as f:
+            for d in self.exif.compressed_date:
+                f.write('-' if d == '' else d)
+                f.write('\n')
         reversed_date = '/'.join(list(reversed(self.exif.date.split(' ')))) if self.exif.date else ''
         self.thumbnail_title = original_name.original_name + '  (' + reversed_date + self.exif.date_suffix + ')'
         self._label = QLabel(self)
@@ -94,7 +100,7 @@ class Thumbnails(QWidget):
         self.show_hide_btn.setFixedSize(MASK_BUTTON_H_SIZE, BUTTON_V_SIZE)
         self.show_hide_btn.clicked.connect(self.hide)
 
-        # 100% zoom button
+        # zoom button
         self.zoom_btn = QPushButton()
         self.zoom_btn.setText('Zoom')
         # self.zoom_btn.setCheckable(True)
@@ -141,6 +147,21 @@ class Thumbnails(QWidget):
         vbox.setSpacing(0)
         vbox.addStretch()
 
+        self.zoom = ImageViewer(self._full_path_tmp, self.rank)
+
+    @property
+    def rank(self):
+        return self._rank
+
+    @rank.setter
+    def rank(self, value):
+        self._rank = value
+
+    # --------------------------------------------------------------------------------
+    def update_zoom(self):
+        self.zoom = ImageViewer(self._full_path_tmp, self._rank)
+        # print('uuu', self._rank, self.exif.original_name) #<<<
+
     # --------------------------------------------------------------------------------
     def get_date_suffix(self):
         return self.exif.date_suffix
@@ -178,15 +199,15 @@ class Thumbnails(QWidget):
         return self.bg_color
 
     # --------------------------------------------------------------------------------
-    def set_bg_color(self, color: str):
+    def set_bg_color(self, thumb_frame_color: str):
         """
         set_bg_color set background color
 
         Args:
-            color (str): color of the background
+            thumb_frame_color (str): color of the background
         """
-        self.setStyleSheet(f'background-color: {color}')
-        self.bg_color = color
+        self.setStyleSheet(f'background-color: {thumb_frame_color}')
+        self.bg_color = thumb_frame_color
 
     # --------------------------------------------------------------------------------
     def set_pixmap(self, pixmap_path: str):
@@ -205,6 +226,7 @@ class Thumbnails(QWidget):
         else:
             self.show_hide_btn.setStyleSheet('background-color: #6e6')
             self.show_hide_btn.setText('Masquer')
+        self.is_blurred = blur
 
     # --------------------------------------------------------------------------------
     @Slot(result=bool)
@@ -218,10 +240,11 @@ class Thumbnails(QWidget):
     @Slot(result=str)
     def hide(self):
         if self.show_hide_btn.isChecked():
-            self.blur_pixmap()
+            self.blur_pixmap()  # replace picture with the blurred version
             self.update_hide_button(True)
         else:
             self.set_pixmap(self._full_path_tmp)
+            print('fptfpt', self._full_path_tmp)
             self.update_hide_button(False)
 
     @Slot()
@@ -229,10 +252,6 @@ class Thumbnails(QWidget):
         # print('show zoom', self._full_path_tmp)
         # self.zoom.suppress.connect(self._suppress_thumb)
         self.zoom.exec()
-
-    # @Slot()
-    # def _suppress_thumb(self, thumb):
-    #     print('sss', thumb)
 
     # --------------------------------------------------------------------------------
     @staticmethod

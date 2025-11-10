@@ -25,7 +25,7 @@ class PhotoExif:
             original date (date of the shooting)
         compressed_date: tuple
             the first element of the tuple represents the decade (format: YYYX), the second one the date itself (format: YMDD, where Y is the last part of the year et M is the month as a letter between A for january and L for december)
-            Note: the compressed date is for compatibility with old files (the time of the 8.3 filenames)
+            Note: the compressed date is for compatibility with old files (the times of the 8.3 filenames)
         orientation: str
             unknown if no orientation tag in the exif otherwise :
             portrait (exif orientation == 8), landscape (otherwise)
@@ -60,14 +60,13 @@ class PhotoExif:
 
         meta_data = pyexiv2.ImageMetadata(file)
         meta_data.read()
-        # for key in meta_data.exif_keys:
-        #     print('key:', key)
         self.date = None
-        if 'Exif.Photo.DateTimeOriginal' in list(meta_data):
-            self.date = meta_data['Exif.Photo.DateTimeOriginal'].value.strftime('%Y %m %d')
-            self.time = meta_data['Exif.Photo.DateTimeOriginal'].value.strftime('%H %M %S')
-            self.date_time = meta_data['Exif.Photo.DateTimeOriginal'].value.strftime('%Y %m %d %H %M %S')
-            self.raw_date_time = meta_data['Exif.Photo.DateTimeOriginal'].value
+        for key in list(meta_data):
+            if 'DateTimeOriginal' in key:
+                self.date = meta_data[key].value.strftime('%Y %m %d')
+                self.time = meta_data[key].value.strftime('%H %M %S')
+                self.date_time = meta_data[key].value.strftime('%Y %m %d %H %M %S')
+                self.raw_date_time = meta_data[key].value
         self.orientation = None
         if 'Exif.Image.Orientation' in list(meta_data):
             orientation = meta_data['Exif.Image.Orientation'].value
@@ -96,7 +95,7 @@ class PhotoExif:
         """
         structure of the compressed date, a tuple which comprised:
             1. the decade
-            2. the year/month/day part (DADD)
+            2. the year/month/day part ([0-9][A-L][0-3][0-9])
             3. an optional suffix
         :return: the tuple
         """

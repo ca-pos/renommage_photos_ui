@@ -79,8 +79,8 @@ class ImageViewer(QDialog):
         self._scale_factor = 1.0
 
     def _suppress_picture(self):
-
         self.suppress.emit(self._rank)
+        self.close()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

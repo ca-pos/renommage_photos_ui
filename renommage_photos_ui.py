@@ -1,25 +1,17 @@
-# import os
-# # import re
-# # from functools import partial
-# # from PySide6.QtCore import Slot, Qt, QIODevice
-# #from PhotoExif import *
-# from os.path import abspath, basename
-# import sys
-# import shutil
-# import rawpy
-# import imageio
-# import pyexiv2
-# import datetime
-# import pathlib
-# from functools import partial
+import os, sys, shutil, pathlib
+from os.path import (basename,abspath)
+import re, string, datetime, rawpy, imageio
+from functools import partial
+import pyexiv2
 #
-# from PySide6.QtWidgets import (QMainWindow, QFileDialog, QButtonGroup)
-# from PySide6.QtCore import QFile, QIODevice, QTextStream, Slot
+from PySide6.QtWidgets import (QMainWindow, QButtonGroup, QFileDialog, QApplication)
+from PySide6.QtCore import (Slot, QFile, QIODevice, QTextStream)
 #
-# from interface import Ui_MainWindow
+from interface2 import Ui_MainWindow
+from PhotoExif import PhotoExif
+from CustomClasses import (GalleryDialog, AcceptDialog)
 #
-#
-# from constants import *
+from constants import *
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
@@ -53,23 +45,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.type_radiobuttons_dict = {NEF_TXT: self.rb_nef, JPG_TXT: self.rb_jpg, ALL_TXT: self.rb_all}
 
         # initialize date suffix combobox. TODO: probably no needed any longer
-        self.cbx_date_suffix.setPlaceholderText('Choisir')
-        self.cbx_date_suffix.addItem('Aucun')
-        self.cbx_date_suffix.setCurrentIndex(3)
-        for suffix in range(0, 26):
-            self.cbx_date_suffix.addItem(string.ascii_lowercase[suffix])
+        # self.cbx_date_suffix.setPlaceholderText('Choisir')
+        # self.cbx_date_suffix.addItem('Aucun')
+        # self.cbx_date_suffix.setCurrentIndex(3)
+        # for suffix in range(0, 26):
+        #     self.cbx_date_suffix.addItem(string.ascii_lowercase[suffix])
 
         # connect buttons
         # BTN
         self.btn_gallery.clicked.connect(self.show_gallery)                 # show gallery
         self.btn_gallery.setEnabled(False)
-        self.btn_exec.clicked.connect(self.execute)                         # execute chosen task
-        self.btn_exec.setEnabled(False)
         self.btn_quit.clicked.connect(self.close)                           # leave app
         self.btn_clear_output.clicked.connect(self.clear_console_output)    # clear console
         # tasks pushbuttons
-        self.btn_import.clicked.connect(partial(self.prepare_task, IMPORT_TASK_ID))   # import button        
-        # radiobuttons
+        self.btn_exec.clicked.connect(self.execute)                         # execute chosen task
+        self.btn_exec.setEnabled(False)
+        self.btn_import.clicked.connect(partial(self.prepare_task, IMPORT_TASK_ID))   # import button
+        # radiobuttons (RB)
         self.rb_nef.clicked.connect(self.type_rb_clicked)           # choose which type of picture not used yet
         self.rb_jpg.clicked.connect(self.type_rb_clicked)
         self.rb_all.clicked.connect(self.type_rb_clicked)
@@ -95,11 +87,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return
         self.files_list = files_list    # TODO: self.file_list could be set from self.open_dir !
         self.set_searched_type(type_list)           # set searched type according to folder content
-        if self.content_info(type_list):            # display info about directory content
+        if self.content_info(type_list):            # display info about directory content (True if any pictures in it)
             self.btn_exec.setEnabled(True)          # enable exec and gallery buttons ...
             self.btn_gallery.setEnabled(True)       # unless no picture found in folder
 
-    @Slot()
+    @Slot()  #<<<
     def type_rb_clicked(self):
         pass
         # rb = self.sender()
@@ -114,12 +106,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.get_pictures_in_tmp()
         for photo in self.pictures_list:
             name, ext = os.path.splitext(photo)
-            jpeg_filename = TMP_DIR + basename(name) + JPG_EXT
+            jpeg_filename = TMP_DIR + basename(name)
+            jpeg_fullname = jpeg_filename + JPG_EXT
             if bool(self.type_filters[NEF_TXT].match(ext)): # nef file found
-                if not jpeg_filename in self.pictures_in_tmp:    # jpeg not yet in TMP_DIR
-                    print(f'Création du JPEG ... {jpeg_filename}')
-                    print('jjj', jpeg_filename)
-                    self.create_temporary_jpeg(photo, jpeg_filename)    # create jpeg from NEF photo
+                if not jpeg_fullname in self.pictures_in_tmp:    # jpeg not yet in TMP_DIR
+                    print(f'Création du JPEG ... {jpeg_fullname}')  #<<<
+                    self.create_temporary_jpeg(photo, jpeg_fullname)    # create jpeg from NEF photo
+                    get_flag = pathlib.Path(jpeg_filename + GET_EXT)    # picture to be imported
+                    get_flag.touch()
             elif bool(self.type_filters[JPG_TXT].match(ext)):
                 shutil.copy(photo, jpeg_filename)
             else:
@@ -139,6 +133,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if not self.pictures_list:
             self.pictures_list = self.create_pictures_list()
         self.import_card()
+        print('plpl', self.pictures_list, len(self.pictures_list))
 
     def import_card(self):
         print('Importer (tâche ', self.task_to_do, ')')
@@ -148,9 +143,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def content_info(self, type_list):
         """
-        provide console info about the content of the selected folder
-        :param type_list: list(bool) tells which type radiobutton is checked
-        :return: 'False' if no picture files in the folder, 'True' otherwise
+        Summary
+            provide console info about the content of the selected folder
+        Args:
+            type_list:
+                list(bool) tells which type radiobutton is checked
+        Returns:
+            'False' if no picture files in the folder, 'True' otherwise
         """
         if type_list == [False]*len(type_list):
             self.console_warning(MSG_NO_PICTURE)
@@ -184,7 +183,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             os.chdir(selected_directory)
             self.console.addItem( 'Contenu du répertoire : ' + selected_directory) # and display it
         else:   # cancel button was pressed by user
-            return
+            return None
         # display the content of the folder in console and save it in file_list
         file_list = list()
         for file in os.listdir('.'):
@@ -258,8 +257,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             for index in range(len(filters)):
                 if bool(filters[index].match(ext)):
                     pictures_list.append(file)
-
-        return pictures_list
+                    self.write_console(file)    # display picture_list in console
+        return pictures_list    # source files
 
     def set_checked_type_buttons(self, full_type_list):
         """
@@ -317,6 +316,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pictures_in_tmp = ['./'+str(val) for val in pathlib.Path(TMP_DIR).iterdir()]
         tmp_dict = dict()
         for picture in self.pictures_in_tmp: # create a dict {datetime: picture path}
+            if BLURRED in picture or GET_EXT in picture:    # skip blurred jpeg and get_flag files
+                continue
             exif = PhotoExif(picture)
             key = exif.raw_date_time
             tmp_dict[key] = picture
@@ -358,7 +359,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         return string_
 
     @staticmethod
-    def create_temporary_jpeg(photo, jpeg_filename):
+    def create_temporary_jpeg(photo, jpeg_fullname):
         """
         Summary
             create temporary jpeg: Creates temporary jpeg pictures from NEF. Needed for Gallery
@@ -370,8 +371,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         with rawpy.imread(photo) as raw:
             jpeg_img = raw.postprocess()
             # thumb = raw.extract_thumb()
-        imageio.imsave(jpeg_filename, jpeg_img)
-        meta_data = pyexiv2.ImageMetadata(jpeg_filename)
+        imageio.imsave(jpeg_fullname, jpeg_img)
+        meta_data = pyexiv2.ImageMetadata(jpeg_fullname)
         meta_data.read()
         key = 'Exif.Photo.DateTimeOriginal'
         meta_data[key] = datetime_taken
