@@ -1,17 +1,26 @@
-import os, sys, shutil, pathlib
-from os.path import (basename,abspath)
-import re, string, datetime, rawpy, imageio
+import datetime
+import imageio
+import os
+import pathlib
+import rawpy
+import re
+import shutil
+import sys
 from functools import partial
+from os.path import (basename, abspath)
+
 import pyexiv2
-#
-from PySide6.QtWidgets import (QMainWindow, QButtonGroup, QFileDialog, QApplication)
 from PySide6.QtCore import (Slot, QFile, QIODevice, QTextStream)
 #
-from interface2 import Ui_MainWindow
-from PhotoExif import PhotoExif
+from PySide6.QtWidgets import (QMainWindow, QButtonGroup, QFileDialog, QApplication)
+
 from CustomClasses import (GalleryDialog, AcceptDialog)
+from PhotoExif import PhotoExif
 #
 from constants import *
+#
+from interface2 import Ui_MainWindow
+
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
@@ -44,7 +53,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # note: if more types are added, 'rb_all' must remain the last one
         self.type_radiobuttons_dict = {NEF_TXT: self.rb_nef, JPG_TXT: self.rb_jpg, ALL_TXT: self.rb_all}
 
-        # initialize date suffix combobox. TODO: probably no needed any longer
+        # initialize date suffix combobox. TODO: probably not needed any longer
         # self.cbx_date_suffix.setPlaceholderText('Choisir')
         # self.cbx_date_suffix.addItem('Aucun')
         # self.cbx_date_suffix.setCurrentIndex(3)
@@ -55,7 +64,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # BTN
         self.btn_gallery.clicked.connect(self.show_gallery)                 # show gallery
         self.btn_gallery.setEnabled(False)
-        self.btn_quit.clicked.connect(self.close)                           # leave app
+        self.btn_quit.clicked.connect(self.end_of_task)                           # leave app
         self.btn_clear_output.clicked.connect(self.clear_console_output)    # clear console
         # tasks pushbuttons
         self.btn_exec.clicked.connect(self.execute)                         # execute chosen task
@@ -67,6 +76,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.rb_all.clicked.connect(self.type_rb_clicked)
         # group name edit
         # self.edt_gname.editingFinished.connect(self.gname_done)     # group name entered
+
+    @Slot()
+    def end_of_task(self):
+        print('End of task pict', self.pictures_list)
+        print('End of task temp', self.pictures_in_tmp)
+        self.close()
 
     @Slot()
     def prepare_task(self, btn_id):
@@ -115,7 +130,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     get_flag = pathlib.Path(jpeg_filename + GET_EXT)    # picture to be imported
                     get_flag.touch()
             elif bool(self.type_filters[JPG_TXT].match(ext)):
-                shutil.copy(photo, jpeg_filename)
+                print('phphph', photo) #<<<
+                shutil.copy(photo, jpeg_fullname)
             else:
                 msg = f'{ext} : extension non prévue !'
                 self.console_warning(msg)
@@ -133,7 +149,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if not self.pictures_list:
             self.pictures_list = self.create_pictures_list()
         self.import_card()
-        print('plpl', self.pictures_list, len(self.pictures_list))
+        print('plplpl', self.pictures_list, len(self.pictures_list)) #<<<
 
     def import_card(self):
         print('Importer (tâche ', self.task_to_do, ')')
@@ -177,7 +193,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         file_dialog.setWindowTitle("Répertoire des photos à renommer")
         file_dialog.setFileMode(QFileDialog.FileMode.Directory)
         file_dialog.setViewMode(QFileDialog.ViewMode.List)
-
+        file_dialog.setDirectory(r'/home/camille/Images/_Importation/CARTE/')
+        os.chdir('/home/camille/Images/_Importation/CARTE/')
         if file_dialog.exec():
             selected_directory = file_dialog.selectedFiles()[0]
             os.chdir(selected_directory)
@@ -188,6 +205,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         file_list = list()
         for file in os.listdir('.'):
             if not os.path.isdir(file):
+                if ' ' in file:                         # if file name contains spaces ...
+                    temp = self.suppress_spaces(file)   # suppress extra ones
+                    temp = temp.replace(' ', '_')       # and replaces with underscores
+                    os.rename(file, temp)               # then, renames file
                 file_list.append(abspath(file))
         file_list.sort()
         rank = 1
@@ -247,7 +268,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         Summary
             read 'self.file_list', applies filter(s), and writes 'file' in 'pictures_list' if match
         Return
-            list: selected pictures (nef, jpg, [etc., provision for adding more type in the future] or all)
+            list: selected pictures (nef, jpg, [etc., provision for adding more types in the future] or all)
         """
         pictures_list = list()
         filters = self.get_searched_type_filters()
@@ -316,11 +337,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pictures_in_tmp = ['./'+str(val) for val in pathlib.Path(TMP_DIR).iterdir()]
         tmp_dict = dict()
         for picture in self.pictures_in_tmp: # create a dict {datetime: picture path}
-            if BLURRED in picture or GET_EXT in picture:    # skip blurred jpeg and get_flag files
+            if not JPG_EXT in picture or BLURRED in picture:    # skip blurred jpeg and get_flag files
                 continue
             exif = PhotoExif(picture)
-            key = exif.raw_date_time
+            print('keykey', picture)
+            try:
+                key = exif.raw_date_time
+            except:
+                self.write_console(picture + ': n\'a pas d\'exif !')
+                continue
             tmp_dict[key] = picture
+
         sorted_tmp_dict = dict(sorted(tmp_dict.items()))    # sort dict as a function of key (i.e. datetime)
         self.pictures_in_tmp = [val for val in sorted_tmp_dict.values()] # transfer datetime sorted values to
         # self.pictures_in_tmp

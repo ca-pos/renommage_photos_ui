@@ -1,14 +1,18 @@
 #
-from PySide6.QtWidgets import (QDialog, QLabel, QScrollArea, QPushButton, QHBoxLayout, QVBoxLayout)
+import sys
+from functools import partial
+
+from PySide6.QtWidgets import (QDialog, QLabel, QScrollArea, QPushButton, QHBoxLayout, QVBoxLayout, QApplication)
 from PySide6.QtGui import (QGuiApplication, QImageReader, QPixmap)
 from PySide6.QtCore import (Qt, Signal)
 #
 from constants import *
 #
 class ImageViewer(QDialog):
-    suppress = Signal(int)
+    mask = Signal(str)
     def __init__(self, file_name, rank):
         super().__init__()
+        print('RIV', rank)  #<<<
         self._rank = rank
         self._scale_factor = 1
         self._image_label = QLabel()
@@ -20,6 +24,7 @@ class ImageViewer(QDialog):
         self._scroll_area.setWidget(self._image_label)
         
         btn_quit = QPushButton('Fermer')
+        btn_quit.setStyleSheet("QPushButton{background-color: #f41080}; color: white")
         btn_quit.clicked.connect(self.close)
         btn_original_size = QPushButton('Taille originale')
         btn_original_size.clicked.connect(self._original_size)
@@ -27,10 +32,9 @@ class ImageViewer(QDialog):
         btn_zoom_in.clicked.connect(self._zoom_in)
         btn_zoom_out = QPushButton('Dézoomer')
         btn_zoom_out.clicked.connect(self._zoom_out)
-        btn_suppress = QPushButton('Supprimer')
-        btn_suppress.clicked.connect(self._suppress_picture)
-        btn_suppress.setEnabled(True)  # TODO: emit a signal to suppress picture in gallery
-
+        btn_suppress = QPushButton('Masquer')
+        btn_suppress.clicked.connect(partial(self._suppress_picture, rank))
+        btn_suppress.setEnabled(True)
 
         layout = QHBoxLayout()
         self.setLayout(layout)
@@ -78,8 +82,9 @@ class ImageViewer(QDialog):
         self._image_label.resize(self._original_pixmap_size)
         self._scale_factor = 1.0
 
-    def _suppress_picture(self):
-        self.suppress.emit(self._rank)
+    def _suppress_picture(self, rank):
+        print('EMITEMIT') #<<<
+        self.mask.emit('Zoom')
         self.close()
 
 if __name__ == '__main__':

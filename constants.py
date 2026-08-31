@@ -3,6 +3,9 @@ from PySide6.QtCore import QSize
 BKG_COL = '#450A2C'
 TXT_COL = '#FFE333'
 
+MASK_BTN_SHOW_COLOR = '#e66'
+MASK_BTN_HIDE_COLOR = '#6e6'
+
 NONE_ID = -1
 NEF_ID = 0
 JPG_ID = 1

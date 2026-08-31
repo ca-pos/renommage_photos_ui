@@ -1,5 +1,6 @@
 import random
 import string
+import os, glob
 
 from functools import partial
 
@@ -46,12 +47,12 @@ class Gallery(QWidget):
             th = Thumbnails(photo_file, new_gallery)
             self.layout.addWidget(th)
             th.rank = self.layout.indexOf(th)
-            th.update_zoom()
+            # th.update_zoom()
             th.set_bg_color(self.assign_bg_color(th.rank))
             # process signals from thumbnails
             th.selected.connect(partial(self.thumb_selected, th.rank))
             th.colored.connect(partial(self.change_group_bg_color, th.rank))
-            th.zoom.suppress.connect(self.suppress_picture)
+            # th.zoom.suppress.connect(self.suppress_picture)
         # process signals from controls
         controls.sliced.connect(self.slice_date)
         controls.cleared.connect(self.clear_selection)
@@ -59,17 +60,19 @@ class Gallery(QWidget):
     # --------------------------------------------------------------------------------
     @Slot()
     def suppress_picture(self, thumb):
-        # print('SUPPRESS', thumb)
-        to_suppress = self.layout.takeAt(thumb)
-        to_suppress.widget().deleteLater()
-        if not thumb == len(self._fichier_tmp_jpg):
-            self.w(thumb).update_zoom()
-        del self._fichier_tmp_jpg[thumb-1]
-        # update rank of shifted thumbnails
-        for index in range(thumb, len(self._fichier_tmp_jpg)+1):
-            self.w(index).rank = index
-            print('sss', self.w(index).exif.original_name, self.w(index).exif.file) #<<<
-        # print('lll', len(self._fichier_tmp_jpg)) #<<<
+        print('thumbthumb', thumb)
+        # to_suppress = self.layout.takeAt(thumb)
+        # to_suppress.widget().deleteLater()
+        # if not thumb == len(self._fichier_tmp_jpg):
+        #     self.w(thumb).update_zoom()
+        # del self._fichier_tmp_jpg[thumb-1]  # remove picture from tmp list
+        #
+        # # update rank of shifted thumbnails
+        # for index in range(thumb, len(self._fichier_tmp_jpg)+1):
+        #     self.w(index).rank = index
+        # print('--------------', thumb) #<<<
+        # for index in range(1, len(self._fichier_tmp_jpg)+1): #<<<
+        #     print('sss', self.w(index).exif.original_name, self.w(index).rank) #<<<
 
     # --------------------------------------------------------------------------------
     def slice_date(self):
@@ -162,13 +165,13 @@ class Gallery(QWidget):
             self.w(rank).set_selection(flag)
             return
 
-        print('--->', self.checked_list)
+        print('--->', self.checked_list) #<<<
 
         length = len(self.checked_list)
         if length == 0:
             print('LISTE VIDE')
         if self.first == -1:
-            print('On a le premier :', end=' ')
+            print('On a le premier :', end=' ') #<<<
             print(rank)
             self.update_checked_list(rank)
             self.first = rank
@@ -180,7 +183,7 @@ class Gallery(QWidget):
                 self.first = -1
                 self.checked_list.clear()
                 return
-            print('On a le second :', end=' ')
+            print('On a le second :', end=' ') #<<<
             print(rank)
             self.update_checked_list(rank)
             tmp = self.first
@@ -192,11 +195,11 @@ class Gallery(QWidget):
                 self.update_checked_list(i)
             return
         else:
-            print('ON CHANGE DE LISTE')
+            print('ON CHANGE DE LISTE') #<<<
             if rank in self.checked_list:
-                print('INTÉRIEUR')
+                print('INTÉRIEUR') #<<<
             else:
-                print('EXTÉRIEUR')
+                print('EXTÉRIEUR') #<<<
             for i in self.checked_list:
                 self.w(i).set_selection(False)
             self.w(rank).set_selection(True)
@@ -229,7 +232,7 @@ class Gallery(QWidget):
         ok.append(self.checked_list[0] - 1)
         ok.append(self.checked_list[-1] + 1)
         if not rank in ok:
-            print('Il y a un trou')
+            print('Il y a un trou') #<<<
             return False
         if rank in ok[:-2]:
             rank = -rank
@@ -259,7 +262,7 @@ class Gallery(QWidget):
     # --------------------------------------------------------------------------------
     def update_checked_list(self, item: int):
         if item == 0:
-            print('item == 0, est-ce normal ?')
+            print('item == 0, est-ce normal ?') # <<<
             return
         if item > 0:
             self.checked_list.append(item)
@@ -267,7 +270,7 @@ class Gallery(QWidget):
             item = -item
             self.checked_list.remove(item)
         self.checked_list.sort()
-        print('upd lst', self.checked_list)
+        print('upd lst', self.checked_list) #<<<
 
     # --------------------------------------------------------------------------------
     def w(self, rank: int): # just a shorthand
@@ -309,7 +312,7 @@ class Gallery(QWidget):
     @staticmethod
     def get_next_letter(self, letter):
         letters = string.ascii_lowercase
-        print('gnext', letter, letters)
+        print('gnext', letter, letters) #<<<
         return letters[letters.index(letter) + 1]
 
     # --------------------------------------------------------------------------------
