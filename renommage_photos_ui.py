@@ -18,6 +18,7 @@ from CustomClasses import (GalleryDialog, AcceptDialog)
 from PhotoExif import PhotoExif
 #
 from constants import *
+from set_colors import *
 #
 from interface2 import Ui_MainWindow
 
@@ -79,9 +80,38 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     @Slot()
     def end_of_task(self):
-        print('End of task pict', self.pictures_list)
-        print('End of task temp', self.pictures_in_tmp)
+        dir_list = ['_REJECT', '_BIN', '_IGNORE', '_EXPORT']
+        lst_temp = [filename for filename in os.listdir(TMP_DIR) if not filename in dir_list]
+        lst_temp.sort()
+        bin_dir = pathlib.Path('_BIN')
+        ignore_dir = pathlib.Path('_IGNORE')
+        os.chdir(TMP_DIR)
+        for filename in lst_temp:
+            root, ext = os.path.splitext(filename)
+            match ext:
+                case '.GET':
+                    print('Move to export: ', root)
+                case '.REJECT':
+                    print('Reject: ',root+ext)
+                case '.IGNORE':
+                    filename_orig = self.find_file_in_list_orig(root)
+                    self.move_file('../'+filename_orig, ignore_dir)
+                case _:
+                    self.move_file(filename, bin_dir)
+        print('sptspt', self.pictures_list)
         self.close()
+
+    def move_file(self, filename, dest_dir):
+        file_to_move = pathlib.Path(filename)
+        print('fnarg', filename, dest_dir, file_to_move.name)
+        file_to_move.rename(dest_dir / file_to_move)
+
+    def find_file_in_list_orig(self, root):
+        for filename in self.pictures_list:
+            if not root in filename:
+                continue
+            return filename
+        return None
 
     @Slot()
     def prepare_task(self, btn_id):
@@ -130,7 +160,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     get_flag = pathlib.Path(jpeg_filename + GET_EXT)    # picture to be imported
                     get_flag.touch()
             elif bool(self.type_filters[JPG_TXT].match(ext)):
-                print('phphph', photo) #<<<
+                # print('phphph', photo) #<<<
                 shutil.copy(photo, jpeg_fullname)
             else:
                 msg = f'{ext} : extension non prévue !'
@@ -335,16 +365,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def get_pictures_in_tmp(self):
         self.pictures_in_tmp = ['./'+str(val) for val in pathlib.Path(TMP_DIR).iterdir()]
+        # print('pitpit', self.pictures_in_tmp)
         tmp_dict = dict()
         for picture in self.pictures_in_tmp: # create a dict {datetime: picture path}
             if not JPG_EXT in picture or BLURRED in picture:    # skip blurred jpeg and get_flag files
                 continue
             exif = PhotoExif(picture)
-            print('keykey', picture)
+            # print('keykey', picture) #<<<
             try:
                 key = exif.raw_date_time
             except:
-                self.write_console(picture + ': n\'a pas d\'exif !')
+                msg = picture+MSG_NO_EXIF
+                self.console_warning(msg)
+                root, ext = os.path.splitext(picture)
+                ignore_file = root + IGNORE_EXT
+                with open(ignore_file, 'w') as f:
+                    f.write(msg)
                 continue
             tmp_dict[key] = picture
 

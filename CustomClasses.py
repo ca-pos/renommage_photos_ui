@@ -57,7 +57,7 @@ class GalleryDialog(QDialog):
         controls.close_gallery.connect(self.update_and_close)
 
     def update_and_close(self):
-        print('update and close', self._pictures) #<<<
+        # print('update and close', self._pictures) #<<<
         self.close()
 
 #################################################################################

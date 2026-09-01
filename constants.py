@@ -16,6 +16,7 @@ NEF_EXT = '.NEF'
 JPG_EXT = '.JPG'
 GET_EXT = '.GET'
 REJECT_EXT = '.REJECT'
+IGNORE_EXT = '.IGNORE'
 
 NEF_TXT = 'NEF'
 JPG_TXT = 'JPG/JPEG'
@@ -31,6 +32,11 @@ STEP_0 = '/home/camille/tmp/0. Tri & Renommage/tests_a_jeter/step_0/'      # to 
 STEP_1 = '/home/camille/tmp/0. Tri & Renommage/tests_a_jeter/step_1/'    # to be changed in the final version
 
 TMP_DIR = './tmp/'
+BIN_DIR = '_BIN'
+REJECT_DIR = '_REJECT'
+IGNORE_DIR = '_IGNORE'
+EXPORT_DIR = '_EXPORT'
+
 BLURRED = '_blurred'
 FULL_SIZE = '_full_size'
 THUMB_SIZE = '_thumb_size'
@@ -41,6 +47,7 @@ MSG_PRESS_EXECUTE = "Cliquez sur le bouton 'Exécuter' pour effectuer l'importat
 MSG_SELECT_TYPE_TO_IMPORT = "Sinon, choisir le type d'images à importer puis ...\n"
 MSG_NO_PICTURE = 'Aucun fichier image dans ce répertoire'
 MSG_GROUP_NAME_MISSING = "N'entrez pas un nom vide"
+MSG_NO_EXIF = ': pas d\'exif !'
 MSG_END = '==== Terminé ===='
 
 DISPLAY_HEIGHT = 720

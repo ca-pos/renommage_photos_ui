@@ -87,7 +87,7 @@ class Thumbnails(QWidget):
 
         original_name = OriginalName(self._full_path_tmp)
         get_file_flag = TMP_DIR + original_name.original_name + GET_EXT
-        print('gffgff', get_file_flag)  #<<<
+        # print('gffgff', get_file_flag)  #<<<
         with open(get_file_flag, 'w') as f:
             for d in self.exif.compressed_date:
                 # print(self.exif.compressed_date) #<<<
@@ -224,7 +224,7 @@ class Thumbnails(QWidget):
 
     # --------------------------------------------------------------------------------
     def set_pixmap(self, pixmap_path: str):
-        print('pxmpxm', pixmap_path) #<<<
+        # print('pxmpxm', pixmap_path) #<<<
         self._pixmap = QPixmap(pixmap_path)
         if self.exif.orientation == 'portrait':
             transform = QTransform().rotate(270)
@@ -247,7 +247,7 @@ class Thumbnails(QWidget):
             self.show_hide_btn.setStyleSheet('background-color: #6e6')
             self.zoom_btn.setEnabled(True)
             self.show_hide_btn.setText('Masquer')
-        print('fptfpt2', self._full_path_tmp) #<<<
+        # print('fptfpt2', self._full_path_tmp) #<<<
         self.is_blurred = blur
 
     # --------------------------------------------------------------------------------

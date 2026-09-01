@@ -165,7 +165,7 @@ class Gallery(QWidget):
             self.w(rank).set_selection(flag)
             return
 
-        print('--->', self.checked_list) #<<<
+        # print('--->', self.checked_list) #<<<
 
         length = len(self.checked_list)
         if length == 0:

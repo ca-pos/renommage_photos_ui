@@ -12,7 +12,7 @@ class ImageViewer(QDialog):
     mask = Signal(str)
     def __init__(self, file_name, rank):
         super().__init__()
-        print('RIV', rank)  #<<<
+        # print('RIV', rank)  #<<<
         self._rank = rank
         self._scale_factor = 1
         self._image_label = QLabel()
