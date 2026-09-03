@@ -32,10 +32,13 @@ STEP_0 = '/home/camille/tmp/0. Tri & Renommage/tests_a_jeter/step_0/'      # to 
 STEP_1 = '/home/camille/tmp/0. Tri & Renommage/tests_a_jeter/step_1/'    # to be changed in the final version
 
 TMP_DIR = './tmp/'
-BIN_DIR = '_BIN'
-REJECT_DIR = '_REJECT'
-IGNORE_DIR = '_IGNORE'
-EXPORT_DIR = '_EXPORT'
+BIN_DIR = TMP_DIR+'_BIN/'
+IMAGES_DIR = '/home/camille/Images/'
+IMPORT_DIR = IMAGES_DIR+'_Import'
+CARD_DIR = IMAGES_DIR+'CARTE'
+REJECT_DIR = TMP_DIR+'_REJECT/'
+IGNORE_DIR = TMP_DIR+'_IGNORE/'
+EXPORT_DIR = TMP_DIR+'_EXPORT/'
 
 BLURRED = '_blurred'
 FULL_SIZE = '_full_size'

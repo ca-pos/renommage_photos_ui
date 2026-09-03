@@ -7,7 +7,7 @@ import re
 import shutil
 import sys
 from functools import partial
-from os.path import (basename, abspath)
+from os.path import (basename, abspath, isdir)
 
 import pyexiv2
 from PySide6.QtCore import (Slot, QFile, QIODevice, QTextStream)
@@ -78,33 +78,71 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # group name edit
         # self.edt_gname.editingFinished.connect(self.gname_done)     # group name entered
 
+        # clear everything on start, should be useless in final
+        starting_dir = os.getcwd()
+        os.chdir('/home/camille/Images/_Importation/CARTE/tmp/')
+        for file in os.listdir('.'):
+            if not isdir(file):
+                os.remove(file)
+        for dir_ in ['_BIN', '_IGNORE', '_EXPORT', '_REJECT']:
+            os.chdir('./'+dir_)
+            for file in os.listdir('.'):
+                os.remove(file)
+            os.chdir('../')
+        os.chdir(starting_dir)
+        input('>')
+
     @Slot()
     def end_of_task(self):
+        print('estest', os.getcwd())
         dir_list = ['_REJECT', '_BIN', '_IGNORE', '_EXPORT']
         lst_temp = [filename for filename in os.listdir(TMP_DIR) if not filename in dir_list]
         lst_temp.sort()
-        bin_dir = pathlib.Path('_BIN')
-        ignore_dir = pathlib.Path('_IGNORE')
-        os.chdir(TMP_DIR)
         for filename in lst_temp:
             root, ext = os.path.splitext(filename)
             match ext:
                 case '.GET':
-                    print('Move to export: ', root)
+                    # print('Move to export: ', root)
+                    pass
                 case '.REJECT':
                     print('Reject: ',root+ext)
                 case '.IGNORE':
-                    filename_orig = self.find_file_in_list_orig(root)
-                    self.move_file('../'+filename_orig, ignore_dir)
+                    self.move2_file(root, IGNORE_DIR, ext)
+                    # filename_orig = self.find_file_in_list_orig(root)
+                    # base_orig , ext_orig = os.path.splitext(filename_orig)
+                    # shortname_as_in_card = basename(base_orig)+ext_orig
+                    # with open(shortname_as_in_card, 'rb') as f:
+                    #     img = f.read()
+                    # os.remove(shortname_as_in_card)
+                    # to_tmp =  IGNORE_DIR+'shortname_as_in_card'
+                    # with open(to_tmp, 'wb') as f:
+                    #     f.write(img)
                 case _:
-                    self.move_file(filename, bin_dir)
-        print('sptspt', self.pictures_list)
+                    # os.chdir(TMP_DIR)
+                    self.move2_file(root, BIN_DIR, ext)
+                    # os.chdir(CARD_DIR)
+                    pass
         self.close()
 
-    def move_file(self, filename, dest_dir):
-        file_to_move = pathlib.Path(filename)
-        print('fnarg', filename, dest_dir, file_to_move.name)
-        file_to_move.rename(dest_dir / file_to_move)
+    def move2_file(self, root, dest_dir, coming_from):
+        print(os.getcwd(), dest_dir, coming_from)
+        file_to_move = self.find_file_in_list_orig(root)
+        base, ext = os.path.splitext(file_to_move)
+        shortname = basename(base)+ext
+        print(file_to_move, shortname)
+        with open(shortname, 'rb') as f:
+            img = f.read()
+        # os.remove(shortname)
+        to_tmp = dest_dir+shortname
+        print('tottot', to_tmp, os.getcwd())
+        with open(to_tmp, 'wb') as f:
+            f.write(img)
+        return
+
+    # def move_file(self, filename, dest_dir):
+    #     file_to_move = pathlib.Path(filename)
+    #     file_to_move.rename(dest_dir / file_to_move)
+    #     return [file_to_move, type(file_to_move)]
 
     def find_file_in_list_orig(self, root):
         for filename in self.pictures_list:
