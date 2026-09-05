@@ -77,10 +77,10 @@ class Thumbnails(QWidget):
         self.is_selected = False
         self.is_blurred = False
         self._name_tmp = TMP_DIR + self.exif.original_name
+        # print('--->', photo, new_gallery)
         self._full_path_tmp = self._name_tmp + JPG_EXT
         self._full_path_tmp_blurred = TMP_DIR + self.exif.original_name + BLURRED + JPG_EXT
         Thumbnails.count += 1
-
 
         # self.rank = Thumbnails.count  # used in gallery to access this thumbnail
         self._rank = -1
@@ -88,11 +88,12 @@ class Thumbnails(QWidget):
         original_name = OriginalName(self._full_path_tmp)
         get_file_flag = TMP_DIR + original_name.original_name + GET_EXT
         # print('gffgff', get_file_flag)  #<<<
-        with open(get_file_flag, 'w') as f:
-            for d in self.exif.compressed_date:
-                # print(self.exif.compressed_date) #<<<
-                f.write('-' if d == '' else d)
-                f.write('\n')
+        # with open(get_file_flag, 'w') as f:
+        #     for d in self.exif.compressed_date:
+        #         # print(self.exif.compressed_date) #<<<
+        #         f.write('-' if d == '' else d)
+        #         f.write('\n')
+        # return
         reversed_date = '/'.join(list(reversed(self.exif.date.split(' ')))) if self.exif.date else ''
         self.thumbnail_title = original_name.original_name + '  (' + reversed_date + self.exif.date_suffix + ')'
         self._label = QLabel(self)

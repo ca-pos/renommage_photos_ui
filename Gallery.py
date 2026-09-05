@@ -41,6 +41,7 @@ class Gallery(QWidget):
         self.layout.addStretch()
         self.setLayout(self.layout)
         # create Thumbnails and add to Gallery
+
         for i_thumb in range(len(self._fichier_tmp_jpg)):
             new_gallery = False if i_thumb else True    # if new_gallery, restart thumbnails count
             photo_file = self._fichier_tmp_jpg[i_thumb]
@@ -53,6 +54,7 @@ class Gallery(QWidget):
             th.selected.connect(partial(self.thumb_selected, th.rank))
             th.colored.connect(partial(self.change_group_bg_color, th.rank))
             # th.zoom.suppress.connect(self.suppress_picture)
+
         # process signals from controls
         controls.sliced.connect(self.slice_date)
         controls.cleared.connect(self.clear_selection)

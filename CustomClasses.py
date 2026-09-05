@@ -40,7 +40,6 @@ class GalleryDialog(QDialog):
         from Gallery import Gallery # imported here to avoid circular import problem
 
         self._pictures = pictures
-
         controls = Controls()
         gallery = Gallery(controls, self._pictures)
         display = Display(gallery)

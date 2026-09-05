@@ -80,21 +80,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # clear everything on start, should be useless in final
         starting_dir = os.getcwd()
+        os.makedirs(IMPORT_DIR+CARD_DIR+TMP_DIR, exist_ok = True)
         os.chdir('/home/camille/Images/_Importation/CARTE/tmp/')
         for file in os.listdir('.'):
             if not isdir(file):
                 os.remove(file)
-        for dir_ in ['_BIN', '_IGNORE', '_EXPORT', '_REJECT']:
+        dir_list  = ['_REJECT', '_BIN', '_IGNORE', '_EXPORT']
+        for dir_ in dir_list:
+            os.makedirs(dir_, exist_ok=True)
             os.chdir('./'+dir_)
             for file in os.listdir('.'):
                 os.remove(file)
             os.chdir('../')
         os.chdir(starting_dir)
-        input('>')
 
     @Slot()
     def end_of_task(self):
-        print('estest', os.getcwd())
         dir_list = ['_REJECT', '_BIN', '_IGNORE', '_EXPORT']
         lst_temp = [filename for filename in os.listdir(TMP_DIR) if not filename in dir_list]
         lst_temp.sort()
@@ -102,47 +103,46 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             root, ext = os.path.splitext(filename)
             match ext:
                 case '.GET':
-                    # print('Move to export: ', root)
-                    pass
+                    os.chdir(CARD_DIR)
+                    self.move_file(root, EXPORT_DIR, ext)
                 case '.REJECT':
-                    print('Reject: ',root+ext)
+                    os.chdir(CARD_DIR)
+                    self.move_file(root, REJECT_DIR, ext)
                 case '.IGNORE':
-                    self.move2_file(root, IGNORE_DIR, ext)
-                    # filename_orig = self.find_file_in_list_orig(root)
-                    # base_orig , ext_orig = os.path.splitext(filename_orig)
-                    # shortname_as_in_card = basename(base_orig)+ext_orig
-                    # with open(shortname_as_in_card, 'rb') as f:
-                    #     img = f.read()
-                    # os.remove(shortname_as_in_card)
-                    # to_tmp =  IGNORE_DIR+'shortname_as_in_card'
-                    # with open(to_tmp, 'wb') as f:
-                    #     f.write(img)
-                case _:
-                    # os.chdir(TMP_DIR)
-                    self.move2_file(root, BIN_DIR, ext)
-                    # os.chdir(CARD_DIR)
-                    pass
+                    os.chdir(CARD_DIR)
+                    self.move_file(root, IGNORE_DIR, ext)
+                case '.JPG':
+                    os.chdir(TEMP_DIR_ABS)
+                    self.move_file(root, BIN_DIR, ext)
+                case '_':
+                    print('C\'est quoi ce fichier : ', root+ext) # TOD: change in final: warning to console
+                    self.move_file(root, BIN_DIR, ext)
         self.close()
 
-    def move2_file(self, root, dest_dir, coming_from):
-        print(os.getcwd(), dest_dir, coming_from)
-        file_to_move = self.find_file_in_list_orig(root)
-        base, ext = os.path.splitext(file_to_move)
-        shortname = basename(base)+ext
-        print(file_to_move, shortname)
-        with open(shortname, 'rb') as f:
-            img = f.read()
-        # os.remove(shortname)
-        to_tmp = dest_dir+shortname
+    def move_file(self, root, dest_dir, go_to):
+        print('m2fm2f', os.getcwd(), root, dest_dir, go_to)
+
+        if go_to == JPG_EXT:
+            shortname = '****_'+root
+            file_to_move = root+go_to
+        else:
+            file_to_move = self.find_file_in_list_orig(root)
+            base, ext_ = os.path.splitext(file_to_move)
+            print('basext', base, ext_)
+            file_to_move = basename(base)+ext_
+
+        to_tmp = dest_dir+file_to_move
+        try:
+            with open(file_to_move, 'rb') as f:
+                img = f.read()
+            os.remove(file_to_move)
+        except:
+            print('------------>', file_to_move, to_tmp, os.getcwd())
         print('tottot', to_tmp, os.getcwd())
         with open(to_tmp, 'wb') as f:
             f.write(img)
+        print('-'*130)
         return
-
-    # def move_file(self, filename, dest_dir):
-    #     file_to_move = pathlib.Path(filename)
-    #     file_to_move.rename(dest_dir / file_to_move)
-    #     return [file_to_move, type(file_to_move)]
 
     def find_file_in_list_orig(self, root):
         for filename in self.pictures_list:
@@ -191,15 +191,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             name, ext = os.path.splitext(photo)
             jpeg_filename = TMP_DIR + basename(name)
             jpeg_fullname = jpeg_filename + JPG_EXT
+
             if bool(self.type_filters[NEF_TXT].match(ext)): # nef file found
                 if not jpeg_fullname in self.pictures_in_tmp:    # jpeg not yet in TMP_DIR
-                    print(f'Création du JPEG ... {jpeg_fullname}')  #<<<
+                    # print(f'Création du JPEG à partir de {photo}... {jpeg_fullname} ')  #<<<
                     self.create_temporary_jpeg(photo, jpeg_fullname)    # create jpeg from NEF photo
                     get_flag = pathlib.Path(jpeg_filename + GET_EXT)    # picture to be imported
                     get_flag.touch()
             elif bool(self.type_filters[JPG_TXT].match(ext)):
-                # print('phphph', photo) #<<<
+                print('phphph', photo, jpeg_fullname) #<<<
                 shutil.copy(photo, jpeg_fullname)
+                get_flag = pathlib.Path(jpeg_filename + GET_EXT)    # picture to be imported
+                get_flag.touch()
             else:
                 msg = f'{ext} : extension non prévue !'
                 self.console_warning(msg)
@@ -277,8 +280,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     temp = self.suppress_spaces(file)   # suppress extra ones
                     temp = temp.replace(' ', '_')       # and replaces with underscores
                     os.rename(file, temp)               # then, renames file
-                file_list.append(abspath(file))
+                base, _ = os.path.splitext(file)
+                print('====================>', base+JPG_EXT, file)
+                new_name = base+JPG_EXT
+                os.rename(file, new_name)
+                file_list.append(abspath(new_name))
         file_list.sort()
+        print(file_list)
+
         rank = 1
         for file in file_list:
             rank_str = str("{:03d}".format(rank)) + ':  '
