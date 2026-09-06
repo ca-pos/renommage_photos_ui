@@ -1,0 +1,1 @@
+../../010. (PY)-renommage_photos_cli/renommage_photos_cli-autres/set_colors.py

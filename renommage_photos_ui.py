@@ -120,15 +120,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.close()
 
     def move_file(self, root, dest_dir, go_to):
-        print('m2fm2f', os.getcwd(), root, dest_dir, go_to)
+        # print('m2fm2f', os.getcwd(), root, dest_dir, go_to)
 
         if go_to == JPG_EXT:
-            shortname = '****_'+root
+            # shortname = '****_'+root
             file_to_move = root+go_to
         else:
             file_to_move = self.find_file_in_list_orig(root)
             base, ext_ = os.path.splitext(file_to_move)
-            print('basext', base, ext_)
+            # print('basext', base, ext_)
             file_to_move = basename(base)+ext_
 
         to_tmp = dest_dir+file_to_move
@@ -137,11 +137,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 img = f.read()
             os.remove(file_to_move)
         except:
-            print('------------>', file_to_move, to_tmp, os.getcwd())
-        print('tottot', to_tmp, os.getcwd())
+            print('MOVE FILE PROBLEM ------------>', file_to_move, to_tmp, os.getcwd())
+        # print('tottot', to_tmp, os.getcwd())
         with open(to_tmp, 'wb') as f:
             f.write(img)
-        print('-'*130)
+        # print('-'*130)
         return
 
     def find_file_in_list_orig(self, root):
@@ -199,7 +199,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     get_flag = pathlib.Path(jpeg_filename + GET_EXT)    # picture to be imported
                     get_flag.touch()
             elif bool(self.type_filters[JPG_TXT].match(ext)):
-                print('phphph', photo, jpeg_fullname) #<<<
+                # print('phphph', photo, jpeg_fullname) #<<<
                 shutil.copy(photo, jpeg_fullname)
                 get_flag = pathlib.Path(jpeg_filename + GET_EXT)    # picture to be imported
                 get_flag.touch()
@@ -280,9 +280,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     temp = self.suppress_spaces(file)   # suppress extra ones
                     temp = temp.replace(' ', '_')       # and replaces with underscores
                     os.rename(file, temp)               # then, renames file
+                    file = temp
                 base, _ = os.path.splitext(file)
-                print('====================>', base+JPG_EXT, file)
                 new_name = base+JPG_EXT
+                # print('====================>', new_name, file, os.listdir(CARD_DIR), os.getcwd())
                 os.rename(file, new_name)
                 file_list.append(abspath(new_name))
         file_list.sort()
@@ -426,6 +427,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.console_warning(msg)
                 root, ext = os.path.splitext(picture)
                 ignore_file = root + IGNORE_EXT
+                os.remove(root+GET_EXT)
+                # print('ignign', root)
                 with open(ignore_file, 'w') as f:
                     f.write(msg)
                 continue
