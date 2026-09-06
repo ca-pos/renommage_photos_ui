@@ -227,9 +227,16 @@ class Thumbnails(QWidget):
     def set_pixmap(self, pixmap_path: str):
         # print('pxmpxm', pixmap_path) #<<<
         self._pixmap = QPixmap(pixmap_path)
-        if self.exif.orientation == 'portrait':
-            transform = QTransform().rotate(270)
-            self._pixmap = self._pixmap.transformed(transform)
+
+        transform = QTransform().rotate(0)
+        match self.exif.orientation:
+            case 6:
+                transform = QTransform().rotate(90)
+            case 8:
+                transform = QTransform().rotate(270)
+            case _:
+                pass
+        self._pixmap = self._pixmap.transformed(transform)
         self._pixmap = self._pixmap.scaled(PIXMAP_SCALE, Qt.AspectRatioMode.KeepAspectRatio)
         self._label.setPixmap(self._pixmap)
 

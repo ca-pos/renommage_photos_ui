@@ -60,9 +60,9 @@ class Gallery(QWidget):
         controls.cleared.connect(self.clear_selection)
 
     # --------------------------------------------------------------------------------
-    @Slot()
-    def suppress_picture(self, thumb):
-        print('thumbthumb', thumb)
+    # @Slot()
+    # def suppress_picture(self, thumb):
+    #     print('thumbthumb', thumb)
         # to_suppress = self.layout.takeAt(thumb)
         # to_suppress.widget().deleteLater()
         # if not thumb == len(self._fichier_tmp_jpg):

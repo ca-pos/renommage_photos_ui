@@ -70,9 +70,11 @@ class PhotoExif:
         self.orientation = None
         if 'Exif.Image.Orientation' in list(meta_data):
             orientation = meta_data['Exif.Image.Orientation'].value
-            self.orientation = 'portrait' if orientation == 8 else 'paysage'
+            # self.orientation = 'portrait' if orientation == 8 else 'paysage'
+            self.orientation = orientation
         if self.original_suffix == '.NEF':
             self.nikon_file_number = meta_data['Exif.NikonFi.FileNumber'].value
+            print('nikfnum', self.nikon_file_number)
         else:
             self.nikon_file_number = -1
 #--------------------------------------------------------------------------------

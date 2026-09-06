@@ -65,16 +65,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # BTN
         self.btn_gallery.clicked.connect(self.show_gallery)                 # show gallery
         self.btn_gallery.setEnabled(False)
-        self.btn_quit.clicked.connect(self.end_of_task)                           # leave app
+        self.btn_quit.clicked.connect(self.close)                     # leave app
         self.btn_clear_output.clicked.connect(self.clear_console_output)    # clear console
         # tasks pushbuttons
         self.btn_exec.clicked.connect(self.execute)                         # execute chosen task
         self.btn_exec.setEnabled(False)
-        self.btn_import.clicked.connect(partial(self.prepare_task, IMPORT_TASK_ID))   # import button
+        self.btn_import.clicked.connect(self.import_card)                   # import button
         # radiobuttons (RB)
-        self.rb_nef.clicked.connect(self.type_rb_clicked)           # choose which type of picture not used yet
-        self.rb_jpg.clicked.connect(self.type_rb_clicked)
-        self.rb_all.clicked.connect(self.type_rb_clicked)
+        # self.rb_nef.clicked.connect(self.type_rb_clicked)                    # choose which type of picture not used yet
+        # self.rb_jpg.clicked.connect(self.type_rb_clicked)
+        # self.rb_all.clicked.connect(self.type_rb_clicked)
         # group name edit
         # self.edt_gname.editingFinished.connect(self.gname_done)     # group name entered
 
@@ -95,7 +95,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         os.chdir(starting_dir)
 
     @Slot()
-    def end_of_task(self):
+    def execute(self):
+        self.pictures_selection()
+
+
+    def pictures_selection(self):
         dir_list = ['_REJECT', '_BIN', '_IGNORE', '_EXPORT']
         lst_temp = [filename for filename in os.listdir(TMP_DIR) if not filename in dir_list]
         lst_temp.sort()
@@ -115,9 +119,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     os.chdir(TEMP_DIR_ABS)
                     self.move_file(root, BIN_DIR, ext)
                 case '_':
-                    print('C\'est quoi ce fichier : ', root+ext) # TOD: change in final: warning to console
+                    print('C\'est quoi ce fichier : ', root+ext) # TODO: change in final: warning to console
                     self.move_file(root, BIN_DIR, ext)
-        self.close()
 
     def move_file(self, root, dest_dir, go_to):
         # print('m2fm2f', os.getcwd(), root, dest_dir, go_to)
@@ -174,17 +177,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.btn_exec.setEnabled(True)          # enable exec and gallery buttons ...
             self.btn_gallery.setEnabled(True)       # unless no picture found in folder
 
-    @Slot()  #<<<
-    def type_rb_clicked(self):
-        pass
+    # @Slot()  #<<<
+    # def type_rb_clicked(self):
+    #     pass
         # rb = self.sender()
         # self.searched_type = NEF_ID if rb.isChecked() else JPG_ID
 
     @Slot()
     def show_gallery(self):
         print('Show Gallery')
-        if not self.pictures_list:  #self_pictures_list does not exist yet
-            self.pictures_list = self.create_pictures_list()
+        # if not self.pictures_list:  #self_pictures_list does not exist yet
+        #     self.pictures_list = self.create_pictures_list()
         os.makedirs(TMP_DIR, exist_ok=True) # creates temporary folder to hold jpeg (original or from nef)
         self.get_pictures_in_tmp()
         for photo in self.pictures_list:
@@ -210,23 +213,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.get_pictures_in_tmp()
         gallery_dialog = GalleryDialog(self.pictures_in_tmp)
         gallery_dialog.exec()
+        self.btn_exec.setEnabled(True)
 
     @Slot()
     def clear_console_output(self):
         self.console.clear()
 
-    @Slot()
-    def execute(self):
-        if not self.pictures_list:
-            self.pictures_list = self.create_pictures_list()
-        self.import_card()
-        print('plplpl', self.pictures_list, len(self.pictures_list)) #<<<
-
     def import_card(self):
-        print('Importer (tâche ', self.task_to_do, ')')
+        print('Importer la carte')
+        os.chdir(CARD_DIR)
+        files_in_card_directory = os.listdir('.')
+        self.pictures_list = self.create_pictures_list(files_in_card_directory)
+        self.btn_gallery.setEnabled(True)
 
-    def correct_names(self):
-        pass
+    # def correct_names(self):
+    #     pass
 
     def content_info(self, type_list):
         """
@@ -341,7 +342,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 return [filters_list[TXT_TYPES_LIST[index]]]
         return all_filters
 
-    def create_pictures_list(self):
+    def create_pictures_list(self, files_in_card_directory:list):
         """
         Summary
             read 'self.file_list', applies filter(s), and writes 'file' in 'pictures_list' if match
@@ -351,12 +352,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         pictures_list = list()
         filters = self.get_searched_type_filters()
 
-        for file in self.files_list:
-            name, ext = os.path.splitext(file)
+        for file in files_in_card_directory:
+            _, ext = os.path.splitext(file)
+            not_a_picture = True
             for index in range(len(filters)):
                 if bool(filters[index].match(ext)):
                     pictures_list.append(file)
+                    not_a_picture = False
                     self.write_console(file)    # display picture_list in console
+            if not_a_picture and not os.path.isdir(file):
+                print('XXXX fichier parasite', file)    # TODO: move to the console
         return pictures_list    # source files
 
     def set_checked_type_buttons(self, full_type_list):
