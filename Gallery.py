@@ -41,19 +41,22 @@ class Gallery(QWidget):
         self.layout.addStretch()
         self.setLayout(self.layout)
         # create Thumbnails and add to Gallery
-
+        i_thumb = int()
         for i_thumb in range(len(self._fichier_tmp_jpg)):
             new_gallery = False if i_thumb else True    # if new_gallery, restart thumbnails count
             photo_file = self._fichier_tmp_jpg[i_thumb]
             th = Thumbnails(photo_file, new_gallery)
             self.layout.addWidget(th)
             th.rank = self.layout.indexOf(th)
-            # th.update_zoom()
             th.set_bg_color(self.assign_bg_color(th.rank))
             # process signals from thumbnails
             th.selected.connect(partial(self.thumb_selected, th.rank))
             th.colored.connect(partial(self.change_group_bg_color, th.rank))
-            # th.zoom.suppress.connect(self.suppress_picture)
+        self.number_of_thumbnails = i_thumb+1
+        # for i in range(self.number_of_thumbnails):
+        #     print('------------------->', self.w(i+1).exif.original_name,
+        #           self.w(i+1).exif.compressed_date,
+        #           self.w(i+1).exif.date)
 
         # process signals from controls
         controls.sliced.connect(self.slice_date)
@@ -272,10 +275,10 @@ class Gallery(QWidget):
             item = -item
             self.checked_list.remove(item)
         self.checked_list.sort()
-        print('upd lst', self.checked_list) #<<<
+        # print('upd lst', self.checked_list) #<<<
 
     # --------------------------------------------------------------------------------
-    def w(self, rank: int): # just a shorthand
+    def w(self, rank: int): # just a shorthand to access thumbnails from its rank
         return self.layout.itemAt(rank).widget()
 
     # --------------------------------------------------------------------------------

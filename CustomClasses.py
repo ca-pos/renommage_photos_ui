@@ -1,3 +1,4 @@
+import pickle
 import sys, os
 import re
 
@@ -39,10 +40,12 @@ class GalleryDialog(QDialog):
 
         from Gallery import Gallery # imported here to avoid circular import problem
 
+        self.selected_pictures = dict()
+
         self._pictures = pictures
         controls = Controls()
-        gallery = Gallery(controls, self._pictures)
-        display = Display(gallery)
+        self.gallery = Gallery(controls, self._pictures)
+        display = Display(self.gallery)
         layout = QVBoxLayout()
         layout.addWidget(display)
         layout.addWidget(controls)
@@ -56,8 +59,19 @@ class GalleryDialog(QDialog):
         controls.close_gallery.connect(self.update_and_close)
 
     def update_and_close(self):
-        # print('update and close', self._pictures) #<<<
+        for index in range(len(self._pictures)):
+            rank = index+1
+            original_name = self.w2(rank).exif.original_name #name as from camera
+            date = self.w2(rank).exif.date
+            compressed_date = self.w2(rank).exif.compressed_date
+            is_selected = not self.w2(rank).is_blurred
+
+            self.selected_pictures[original_name] = (is_selected, date, compressed_date)
+
         self.close()
+
+    def w2(self, rank):
+        return self.gallery.w(rank)
 
 #################################################################################
 

@@ -26,7 +26,7 @@ class PhotoExif:
         compressed_date: tuple
             the first element of the tuple represents the decade (format: YYYX), the second one the date itself (format: YMDD, where Y is the last part of the year et M is the month as a letter between A for january and L for december)
             Note: the compressed date is for compatibility with old files (the times of the 8.3 filenames)
-        orientation: str
+        orientation: int  (TODO: 2 next lines are obsolete, to be rewritten)
             unknown if no orientation tag in the exif otherwise :
             portrait (exif orientation == 8), landscape (otherwise)
         height: int
@@ -35,6 +35,8 @@ class PhotoExif:
             width of the image
         nikon_file_number: int
             Nikon file number
+        nikon_color_space:
+            Exif.Nikon3.ColorSpace
     """
     def __init__(self, file) -> None:
         """
@@ -69,12 +71,18 @@ class PhotoExif:
                 self.raw_date_time = meta_data[key].value
         self.orientation = None
         if 'Exif.Image.Orientation' in list(meta_data):
-            orientation = meta_data['Exif.Image.Orientation'].value
+            orientation = meta_data['Exif.Image.Orientation'].value # type int
             # self.orientation = 'portrait' if orientation == 8 else 'paysage'
             self.orientation = orientation
         if self.original_suffix == '.NEF':
-            self.nikon_file_number = meta_data['Exif.NikonFi.FileNumber'].value
-            print('nikfnum', self.nikon_file_number)
+            try:
+                self.nikon_file_number = meta_data['Exif.NikonFi.FileNumber'].value # type int
+            except:
+                print('Pas de clef \'Exif.NikonFi.FileNumber\' dans le fichier : ', file)  # TODO: to console
+            try:
+                self.nikon_color_space = meta_data['Exif.Nikon3.ColorSpace'].value  # type int 1: sRGB, 2: Adobe
+            except:
+                print('Pas de clef \'Exif.Nikon3.ColorSpace\' dans le fichier : ', file)   # TODO: to console
         else:
             self.nikon_file_number = -1
 #--------------------------------------------------------------------------------

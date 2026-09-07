@@ -35,6 +35,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.type_list = list()
         self.task_to_do = NO_TASK
         self.pictures_in_tmp = list()
+        self.pictures_with_date_and_selection = dict()
 
         # creates type filters (TODO: get rid of get_type_filters static method !
         re_nef = re.compile(r".*\.nef$", re.IGNORECASE)  # nef filter
@@ -80,8 +81,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # clear everything on start, should be useless in final
         starting_dir = os.getcwd()
-        os.makedirs(IMPORT_DIR+CARD_DIR+TMP_DIR, exist_ok = True)
-        os.chdir('/home/camille/Images/_Importation/CARTE/tmp/')
+        go_to_dir = CARD_DIR+TMP_DIR
+        # shutil.rmtree(go_to_dir)
+        os.makedirs(go_to_dir, exist_ok=True)
+        os.chdir(go_to_dir)
         for file in os.listdir('.'):
             if not isdir(file):
                 os.remove(file)
@@ -97,7 +100,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     @Slot()
     def execute(self):
         self.pictures_selection()
+        self.pictures_pre_sorted()
 
+    def pictures_pre_sorted(self):
+        print('---->', self.pictures_with_date_and_selection)
+        for key in self.pictures_with_date_and_selection.keys():
+            print(key)
 
     def pictures_selection(self):
         dir_list = ['_REJECT', '_BIN', '_IGNORE', '_EXPORT']
@@ -109,18 +117,28 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 case '.GET':
                     os.chdir(CARD_DIR)
                     self.move_file(root, EXPORT_DIR, ext)
+                    os.remove(TMP_DIR + filename)
                 case '.REJECT':
                     os.chdir(CARD_DIR)
                     self.move_file(root, REJECT_DIR, ext)
+                    os.remove(TMP_DIR + filename)
                 case '.IGNORE':
                     os.chdir(CARD_DIR)
                     self.move_file(root, IGNORE_DIR, ext)
+                    os.remove(TMP_DIR+filename)
                 case '.JPG':
                     os.chdir(TEMP_DIR_ABS)
                     self.move_file(root, BIN_DIR, ext)
                 case '_':
                     print('C\'est quoi ce fichier : ', root+ext) # TODO: change in final: warning to console
                     self.move_file(root, BIN_DIR, ext)
+        #
+        # for file in os.listdir(BIN_DIR):
+        #     _, ext_ = os.path.splitext(file)
+        #     if ext_ == GET_EXT:
+        #         os.remove(file)
+        #     else:
+        #         print(f"Fichier {file} conservé dans "+TMP_DIR)
 
     def move_file(self, root, dest_dir, go_to):
         # print('m2fm2f', os.getcwd(), root, dest_dir, go_to)
@@ -141,10 +159,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             os.remove(file_to_move)
         except:
             print('MOVE FILE PROBLEM ------------>', file_to_move, to_tmp, os.getcwd())
-        # print('tottot', to_tmp, os.getcwd())
         with open(to_tmp, 'wb') as f:
             f.write(img)
-        # print('-'*130)
         return
 
     def find_file_in_list_orig(self, root):
@@ -154,40 +170,38 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return filename
         return None
 
-    @Slot()
-    def prepare_task(self, btn_id):
-        """
-        Summary
-            'prepare' common trunk for all tasks (select folder and set searched type(s) according to its content)
-        Args
-            btn_id: int: task id
-        Return
-            None
-        """
-        self.pictures_list = [] # force reading in 'execute' or 'show_gallery' to get rid of ancient values
-        self.task_to_do = btn_id    # for later use by 'execute' function
-        files_list = self.open_dir()
-        if files_list:
-            type_list = self.examine_list(files_list)    # find folder content, NEF, JPG, etc.
-        else:   # no file in the folder ou 'NO' response from the user
-            return
-        self.files_list = files_list    # TODO: self.file_list could be set from self.open_dir !
-        self.set_searched_type(type_list)           # set searched type according to folder content
-        if self.content_info(type_list):            # display info about directory content (True if any pictures in it)
-            self.btn_exec.setEnabled(True)          # enable exec and gallery buttons ...
-            self.btn_gallery.setEnabled(True)       # unless no picture found in folder
+    # @Slot()
+    # def prepare_task(self, btn_id):
+    #     """
+    #     Summary
+    #         'prepare' common trunk for all tasks (select folder and set searched type(s) according to its content)
+    #     Args
+    #         btn_id: int: task id
+    #     Return
+    #         None
+    #     """
+    #     self.pictures_list = [] # force reading in 'execute' or 'show_gallery' to get rid of ancient values
+    #     self.task_to_do = btn_id    # for later use by 'execute' function
+    #     files_list = self.open_dir()
+    #     if files_list:
+    #         type_list = self.examine_list(files_list)    # find folder content, NEF, JPG, etc.
+    #     else:   # no file in the folder ou 'NO' response from the user
+    #         return
+    #     self.files_list = files_list    # TODO: self.file_list could be set from self.open_dir !
+    #     self.set_searched_type(type_list)           # set searched type according to folder content
+    #     if self.content_info(type_list):            # display info about directory content (True if any pictures in it)
+    #         self.btn_exec.setEnabled(True)          # enable exec and gallery buttons ...
+    #         self.btn_gallery.setEnabled(True)       # unless no picture found in folder
 
     # @Slot()  #<<<
     # def type_rb_clicked(self):
     #     pass
-        # rb = self.sender()
-        # self.searched_type = NEF_ID if rb.isChecked() else JPG_ID
+    # rb = self.sender()
+    # self.searched_type = NEF_ID if rb.isChecked() else JPG_ID
 
     @Slot()
     def show_gallery(self):
         print('Show Gallery')
-        # if not self.pictures_list:  #self_pictures_list does not exist yet
-        #     self.pictures_list = self.create_pictures_list()
         os.makedirs(TMP_DIR, exist_ok=True) # creates temporary folder to hold jpeg (original or from nef)
         self.get_pictures_in_tmp()
         for photo in self.pictures_list:
@@ -197,12 +211,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             if bool(self.type_filters[NEF_TXT].match(ext)): # nef file found
                 if not jpeg_fullname in self.pictures_in_tmp:    # jpeg not yet in TMP_DIR
-                    # print(f'Création du JPEG à partir de {photo}... {jpeg_fullname} ')  #<<<
                     self.create_temporary_jpeg(photo, jpeg_fullname)    # create jpeg from NEF photo
-                    get_flag = pathlib.Path(jpeg_filename + GET_EXT)    # picture to be imported
+                    get_flag = pathlib.Path(jpeg_filename + GET_EXT)  # picture to be imported
                     get_flag.touch()
             elif bool(self.type_filters[JPG_TXT].match(ext)):
-                # print('phphph', photo, jpeg_fullname) #<<<
                 shutil.copy(photo, jpeg_fullname)
                 get_flag = pathlib.Path(jpeg_filename + GET_EXT)    # picture to be imported
                 get_flag.touch()
@@ -213,6 +225,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.get_pictures_in_tmp()
         gallery_dialog = GalleryDialog(self.pictures_in_tmp)
         gallery_dialog.exec()
+        self.pictures_with_date_and_selection = gallery_dialog.selected_pictures
+
         self.btn_exec.setEnabled(True)
 
     @Slot()

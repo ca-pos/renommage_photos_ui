@@ -77,7 +77,6 @@ class Thumbnails(QWidget):
         self.is_selected = False
         self.is_blurred = False
         self._name_tmp = TMP_DIR + self.exif.original_name
-        # print('--->', photo, new_gallery)
         self._full_path_tmp = self._name_tmp + JPG_EXT
         self._full_path_tmp_blurred = TMP_DIR + self.exif.original_name + BLURRED + JPG_EXT
         Thumbnails.count += 1
@@ -86,14 +85,6 @@ class Thumbnails(QWidget):
         self._rank = -1
 
         original_name = OriginalName(self._full_path_tmp)
-        get_file_flag = TMP_DIR + original_name.original_name + GET_EXT
-        # print('gffgff', get_file_flag)  #<<<
-        # with open(get_file_flag, 'w') as f:
-        #     for d in self.exif.compressed_date:
-        #         # print(self.exif.compressed_date) #<<<
-        #         f.write('-' if d == '' else d)
-        #         f.write('\n')
-        # return
         reversed_date = '/'.join(list(reversed(self.exif.date.split(' ')))) if self.exif.date else ''
         self.thumbnail_title = original_name.original_name + '  (' + reversed_date + self.exif.date_suffix + ')'
         self._label = QLabel(self)
@@ -114,7 +105,6 @@ class Thumbnails(QWidget):
 
         # zoom button
         self.zoom_btn.setText('Zoom')
-        # self.zoom_btn.setCheckable(True)
         self.zoom_btn.setStyleSheet('margin-left: 4px; background-color: #6e6')
         self.zoom_btn.setFixedSize(MASK_BUTTON_H_SIZE, BUTTON_V_SIZE)
         self.zoom_btn.clicked.connect(self.show_zoom)
@@ -270,13 +260,13 @@ class Thumbnails(QWidget):
     @Slot(result=str)
     def hide_jpeg(self, event_from):
         if event_from == 'Zoom':
-            print('on vient de zoom') #<<<
+            # print('on vient de zoom') #<<<
             self.show_hide_btn.setChecked(True)
         if self.show_hide_btn.isChecked():
             self.blur_pixmap()  # replace picture with the blurred version
             self.update_hide_button(True)
         else:
-            print('not checked', )    #<<<
+            # print('not checked', )    #<<<
             self.set_pixmap(self._full_path_tmp)
             self.update_hide_button(False)
 

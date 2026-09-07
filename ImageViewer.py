@@ -83,7 +83,7 @@ class ImageViewer(QDialog):
         self._scale_factor = 1.0
 
     def _suppress_picture(self, rank):
-        print('EMITEMIT') #<<<
+        # print('EMITEMIT') #<<<
         self.mask.emit('Zoom')
         self.close()
 
