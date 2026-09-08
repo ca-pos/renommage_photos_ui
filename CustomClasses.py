@@ -1,36 +1,31 @@
-import pickle
 import sys, os
 import re
 
 from PySide6.QtWidgets import (QApplication, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox, QDialog,
-                               QScrollArea, QDialogButtonBox, QLabel, QWidget)
-# from PySide6.QtGui import QPixmap, QTransform, QPalette, QIcon, QScreen
+                               QScrollArea, QWidget)
 from PySide6.QtGui import (QPalette, QScreen)
-# from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtCore import (Signal, Slot, Qt)
-#
-# from PIL import ImageFilter, ImageQt
-#
+
 from constants import *
 
-class AcceptDialog(QDialog):
-    def __init__(self):
-        super().__init__()
-
-        self.buttonBox = QDialogButtonBox()
-        self.btn_dir_ok = QPushButton('Oui')
-        self.btn_dir_ok.clicked.connect(self.accept)
-        self.btn_dir_wrong = QPushButton('Non')
-        self.btn_dir_wrong.clicked.connect(self.reject)
-
-        layout_h = QHBoxLayout()
-        layout_h.addWidget(self.btn_dir_wrong)
-        layout_h.addWidget(self.btn_dir_ok)
-        layout_v = QVBoxLayout()
-        message = QLabel('Est-ce le bon répertoire ?')
-        layout_v.addWidget(message)
-        layout_v.addLayout(layout_h)
-        self.setLayout(layout_v)
+# class AcceptDialog(QDialog):
+#     def __init__(self):
+#         super().__init__()
+#
+#         self.buttonBox = QDialogButtonBox()
+#         self.btn_dir_ok = QPushButton('Oui')
+#         self.btn_dir_ok.clicked.connect(self.accept)
+#         self.btn_dir_wrong = QPushButton('Non')
+#         self.btn_dir_wrong.clicked.connect(self.reject)
+#
+#         layout_h = QHBoxLayout()
+#         layout_h.addWidget(self.btn_dir_wrong)
+#         layout_h.addWidget(self.btn_dir_ok)
+#         layout_v = QVBoxLayout()
+#         message = QLabel('Est-ce le bon répertoire ?')
+#         layout_v.addWidget(message)
+#         layout_v.addLayout(layout_h)
+#         self.setLayout(layout_v)
 
 #################################################################################
 
@@ -54,20 +49,16 @@ class GalleryDialog(QDialog):
         self.setStyleSheet('background-color: #666')
         self.setLayout(layout)
 
-        # controls.close_gallery.connect(self.close) # <<<<<<<<<<<<<< close gallery using default close
-
         controls.close_gallery.connect(self.update_and_close)
 
     def update_and_close(self):
         for index in range(len(self._pictures)):
-            rank = index+1
-            original_name = self.w2(rank).exif.original_name #name as from camera
-            date = self.w2(rank).exif.date
-            compressed_date = self.w2(rank).exif.compressed_date
-            is_selected = not self.w2(rank).is_blurred
-
-            self.selected_pictures[original_name] = (is_selected, date, compressed_date)
-
+            rank = index + 1
+            if not  self.w2(rank).is_blurred:
+                original_name = self.w2(rank).exif.original_name+self.w2(rank).exif.original_ext
+                date = self.w2(rank).exif.date
+                compressed_date = self.w2(rank).exif.compressed_date
+                self.selected_pictures[original_name] = (date, compressed_date)
         self.close()
 
     def w2(self, rank):

@@ -14,7 +14,8 @@ from PySide6.QtCore import (Slot, QFile, QIODevice, QTextStream)
 #
 from PySide6.QtWidgets import (QMainWindow, QButtonGroup, QFileDialog, QApplication)
 
-from CustomClasses import (GalleryDialog, AcceptDialog)
+from CustomClasses import (GalleryDialog)
+# from CustomClasses import (GalleryDialog, AcceptDialog)
 from PhotoExif import PhotoExif
 #
 from constants import *
@@ -104,8 +105,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def pictures_pre_sorted(self):
         print('---->', self.pictures_with_date_and_selection)
+        os.chdir(PRE_SORT_DIR)
         for key in self.pictures_with_date_and_selection.keys():
-            print(key)
+            base, _ = os.path.splitext(key)
+            filename = self.find_file_in_list_orig(base)
+            source = os.path.join(EXPORT_DIR_ABS, filename)
+            decade = self.pictures_with_date_and_selection[key][1][0]
+            day = self.pictures_with_date_and_selection[key][1][1]
+            modifier = self.pictures_with_date_and_selection[key][1][2]
+            day = day+modifier
+            dest_dir = os.path.join(decade, day)
+            os.makedirs(dest_dir,0o755, True)
+            shutil.move(source, dest_dir)
+
 
     def pictures_selection(self):
         dir_list = ['_REJECT', '_BIN', '_IGNORE', '_EXPORT']
@@ -113,6 +125,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         lst_temp.sort()
         for filename in lst_temp:
             root, ext = os.path.splitext(filename)
+            # print('lstlst', filename)
             match ext:
                 case '.GET':
                     os.chdir(CARD_DIR)
@@ -132,13 +145,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 case '_':
                     print('C\'est quoi ce fichier : ', root+ext) # TODO: change in final: warning to console
                     self.move_file(root, BIN_DIR, ext)
-        #
-        # for file in os.listdir(BIN_DIR):
-        #     _, ext_ = os.path.splitext(file)
-        #     if ext_ == GET_EXT:
-        #         os.remove(file)
-        #     else:
-        #         print(f"Fichier {file} conservé dans "+TMP_DIR)
 
     def move_file(self, root, dest_dir, go_to):
         # print('m2fm2f', os.getcwd(), root, dest_dir, go_to)
@@ -149,7 +155,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             file_to_move = self.find_file_in_list_orig(root)
             base, ext_ = os.path.splitext(file_to_move)
-            # print('basext', base, ext_)
             file_to_move = basename(base)+ext_
 
         to_tmp = dest_dir+file_to_move
@@ -240,9 +245,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pictures_list = self.create_pictures_list(files_in_card_directory)
         self.btn_gallery.setEnabled(True)
 
-    # def correct_names(self):
-    #     pass
-
     def content_info(self, type_list):
         """
         Summary
@@ -267,57 +269,57 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.write_console(MSG_PRESS_EXECUTE)
         return True
 
-    def open_dir(self):
-        """
-        Summary
-            Open directory containing the pictures to process
-        Return
-            list: list of all the files in the directory, excluding subdirectories
-        """
-        # open the dialog window for folder selection
-        file_dialog = QFileDialog(self)
-        file_dialog.setWindowTitle("Répertoire des photos à renommer")
-        file_dialog.setFileMode(QFileDialog.FileMode.Directory)
-        file_dialog.setViewMode(QFileDialog.ViewMode.List)
-        file_dialog.setDirectory(r'/home/camille/Images/_Importation/CARTE/')
-        os.chdir('/home/camille/Images/_Importation/CARTE/')
-        if file_dialog.exec():
-            selected_directory = file_dialog.selectedFiles()[0]
-            os.chdir(selected_directory)
-            self.console.addItem( 'Contenu du répertoire : ' + selected_directory) # and display it
-        else:   # cancel button was pressed by user
-            return None
-        # display the content of the folder in console and save it in file_list
-        file_list = list()
-        for file in os.listdir('.'):
-            if not os.path.isdir(file):
-                if ' ' in file:                         # if file name contains spaces ...
-                    temp = self.suppress_spaces(file)   # suppress extra ones
-                    temp = temp.replace(' ', '_')       # and replaces with underscores
-                    os.rename(file, temp)               # then, renames file
-                    file = temp
-                base, _ = os.path.splitext(file)
-                new_name = base+JPG_EXT
-                # print('====================>', new_name, file, os.listdir(CARD_DIR), os.getcwd())
-                os.rename(file, new_name)
-                file_list.append(abspath(new_name))
-        file_list.sort()
-        print(file_list)
-
-        rank = 1
-        for file in file_list:
-            rank_str = str("{:03d}".format(rank)) + ':  '
-            self.console.addItem( rank_str+basename(file))
-            rank += 1
-
-        # ask confirmation
-        dlg = AcceptDialog()
-        dlg.setWindowTitle('Choisir le répertoire')
-
-        if not dlg.exec(): # not the right directory, returned list is emptied
-            file_list = []
-
-        return file_list # all files, pictures and others
+    # def open_dir(self):
+    #     """
+    #     Summary
+    #         Open directory containing the pictures to process
+    #     Return
+    #         list: list of all the files in the directory, excluding subdirectories
+    #     """
+    #     # open the dialog window for folder selection
+    #     file_dialog = QFileDialog(self)
+    #     file_dialog.setWindowTitle("Répertoire des photos à renommer")
+    #     file_dialog.setFileMode(QFileDialog.FileMode.Directory)
+    #     file_dialog.setViewMode(QFileDialog.ViewMode.List)
+    #     file_dialog.setDirectory(r'/home/camille/Images/_Importation/CARTE/')
+    #     os.chdir('/home/camille/Images/_Importation/CARTE/')
+    #     if file_dialog.exec():
+    #         selected_directory = file_dialog.selectedFiles()[0]
+    #         os.chdir(selected_directory)
+    #         self.console.addItem( 'Contenu du répertoire : ' + selected_directory) # and display it
+    #     else:   # cancel button was pressed by user
+    #         return None
+    #     # display the content of the folder in console and save it in file_list
+    #     file_list = list()
+    #     for file in os.listdir('.'):
+    #         if not os.path.isdir(file):
+    #             if ' ' in file:                         # if file name contains spaces ...
+    #                 temp = self.suppress_spaces(file)   # suppress extra ones
+    #                 temp = temp.replace(' ', '_')       # and replaces with underscores
+    #                 os.rename(file, temp)               # then, renames file
+    #                 file = temp
+    #             base, _ = os.path.splitext(file)
+    #             new_name = base+JPG_EXT
+    #             # print('====================>', new_name, file, os.listdir(CARD_DIR), os.getcwd())
+    #             os.rename(file, new_name)
+    #             file_list.append(abspath(new_name))
+    #     file_list.sort()
+    #     print(file_list)
+    #
+    #     rank = 1
+    #     for file in file_list:
+    #         rank_str = str("{:03d}".format(rank)) + ':  '
+    #         self.console.addItem( rank_str+basename(file))
+    #         rank += 1
+    #
+    #     # ask confirmation
+    #     dlg = AcceptDialog()
+    #     dlg.setWindowTitle('Choisir le répertoire')
+    #
+    #     if not dlg.exec(): # not the right directory, returned list is emptied
+    #         file_list = []
+    #
+    #     return file_list # all files, pictures and others
 
     def set_searched_type(self, type_list):
         """

@@ -35,6 +35,7 @@ BIN_DIR = CARD_DIR+'/tmp/'+'_BIN/'
 REJECT_DIR = TMP_DIR+'_REJECT/'
 IGNORE_DIR = TMP_DIR+'_IGNORE/'
 EXPORT_DIR = TMP_DIR+'_EXPORT/'
+EXPORT_DIR_ABS = CARD_DIR+EXPORT_DIR
 
 # MESSAGES
 MSG_IMPORT_ALL = 'Importation de tous les fichiers images ...'

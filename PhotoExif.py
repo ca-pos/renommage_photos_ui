@@ -35,7 +35,7 @@ class PhotoExif:
             width of the image
         nikon_file_number: int
             Nikon file number
-        nikon_color_space:
+        nikon_color_space: int
             Exif.Nikon3.ColorSpace
     """
     def __init__(self, file) -> None:

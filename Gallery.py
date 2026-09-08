@@ -63,23 +63,6 @@ class Gallery(QWidget):
         controls.cleared.connect(self.clear_selection)
 
     # --------------------------------------------------------------------------------
-    # @Slot()
-    # def suppress_picture(self, thumb):
-    #     print('thumbthumb', thumb)
-        # to_suppress = self.layout.takeAt(thumb)
-        # to_suppress.widget().deleteLater()
-        # if not thumb == len(self._fichier_tmp_jpg):
-        #     self.w(thumb).update_zoom()
-        # del self._fichier_tmp_jpg[thumb-1]  # remove picture from tmp list
-        #
-        # # update rank of shifted thumbnails
-        # for index in range(thumb, len(self._fichier_tmp_jpg)+1):
-        #     self.w(index).rank = index
-        # print('--------------', thumb) #<<<
-        # for index in range(1, len(self._fichier_tmp_jpg)+1): #<<<
-        #     print('sss', self.w(index).exif.original_name, self.w(index).rank) #<<<
-
-    # --------------------------------------------------------------------------------
     def slice_date(self):
         if len(self.checked_list) == 0:  # no selection
             return
@@ -315,9 +298,8 @@ class Gallery(QWidget):
 
     # --------------------------------------------------------------------------------
     @staticmethod
-    def get_next_letter(self, letter):
+    def get_next_letter(letter):
         letters = string.ascii_lowercase
-        print('gnext', letter, letters) #<<<
         return letters[letters.index(letter) + 1]
 
     # --------------------------------------------------------------------------------
