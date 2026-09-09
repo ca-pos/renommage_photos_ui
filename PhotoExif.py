@@ -1,11 +1,6 @@
-# import os
-# from pathlib import Path
 from pathlib import Path
-# import string
 import string
-# import pyexiv2
 import pyexiv2
-# from PIL import Image
 from PIL import Image
 #
 class PhotoExif:
@@ -79,12 +74,16 @@ class PhotoExif:
                 self.nikon_file_number = meta_data['Exif.NikonFi.FileNumber'].value # type int
             except:
                 print('Pas de clef \'Exif.NikonFi.FileNumber\' dans le fichier : ', file)  # TODO: to console
+                self.nikon_file_number = 0
             try:
                 self.nikon_color_space = meta_data['Exif.Nikon3.ColorSpace'].value  # type int 1: sRGB, 2: Adobe
+                self.nikon_color_space = 0
             except:
                 print('Pas de clef \'Exif.Nikon3.ColorSpace\' dans le fichier : ', file)   # TODO: to console
+                self.nikon_color_space = None
         else:
-            self.nikon_file_number = -1
+            self.nikon_file_number = None
+            self.nikon_color_space = None
 #--------------------------------------------------------------------------------
     @property
     def file(self):

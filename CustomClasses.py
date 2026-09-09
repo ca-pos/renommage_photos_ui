@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (QApplication, QPushButton, QVBoxLayout, QHBoxLayo
 from PySide6.QtGui import (QPalette, QScreen)
 from PySide6.QtCore import (Signal, Slot, Qt)
 
+from PhotoExif import PhotoExif
 from constants import *
 
 # class AcceptDialog(QDialog):
@@ -136,20 +137,21 @@ class Controls(QWidget):
 class OriginalName:
     """Try to find the original name of the file"""
 
-    def __init__(self, current_ext):
+    def __init__(self, file):
         """
         :param current_name: name of the file in which the original is to be found
         """
         self._original_name = ''
         regex = (r'.*(_DSC\d\d\d\d)\D', r'.*(DSC_\d\d\d\d)\D', r'.*(IMG_\d{4,4})\D')
-
         for r in regex:
-            on = re.findall(r, current_ext)
+            on = re.findall(r, file)
             if on:
                 self._original_name = on[0]
                 break
             else:
+                exif = PhotoExif(file)
                 self._original_name = 'XXX_0000'
+
 
     @property
     def original_name(self):
@@ -160,7 +162,7 @@ class OriginalName:
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    os.chdir('/home/camille/_cm_nef/')
+    os.chdir('/home/camille/Images/_Importation/CARTE/')
     pictures = os.listdir('./tmp')
     pictures = ['./tmp/' + val for val in pictures]
     pictures.sort()

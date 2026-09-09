@@ -3,7 +3,7 @@ import sys
 from functools import partial
 
 from PySide6.QtWidgets import (QDialog, QLabel, QScrollArea, QPushButton, QHBoxLayout, QVBoxLayout, QApplication)
-from PySide6.QtGui import (QGuiApplication, QImageReader, QPixmap)
+from PySide6.QtGui import (QGuiApplication, QImageReader, QPixmap, QTransform)
 from PySide6.QtCore import (Qt, Signal)
 #
 from constants import *
@@ -60,6 +60,12 @@ class ImageViewer(QDialog):
         pixmap = QPixmap.fromImage(self._image)
         self._original_pixmap_size = pixmap.size()
         pixmap = pixmap.scaled(available_size*self._scale_factor, Qt.AspectRatioMode.KeepAspectRatio)
+        #---------------------------------------------------------------------------
+        # TODO: add a rotate button to do with pixmap orientation
+        self._image_label.setPixmap(pixmap)
+        transform = QTransform().rotate(90)
+        # pixmap = pixmap.transformed(transform)
+        #---------------------------------------------------------------------------
         self._image_label.setPixmap(pixmap)
         self._image_label.adjustSize()
         self._scroll_area.setVisible(True)

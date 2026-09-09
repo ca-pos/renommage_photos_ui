@@ -1,26 +1,22 @@
 import datetime
-import imageio
 import os
 import pathlib
-import rawpy
 import re
 import shutil
 import sys
-from functools import partial
 from os.path import (basename, abspath, isdir)
 
+import imageio
+import rawpy
 import pyexiv2
 from PySide6.QtCore import (Slot, QFile, QIODevice, QTextStream)
-#
-from PySide6.QtWidgets import (QMainWindow, QButtonGroup, QFileDialog, QApplication)
+from PySide6.QtGui import (QColor)
+from PySide6.QtWidgets import (QMainWindow, QButtonGroup, QListWidgetItem, QApplication)
 
 from CustomClasses import (GalleryDialog)
-# from CustomClasses import (GalleryDialog, AcceptDialog)
 from PhotoExif import PhotoExif
-#
 from constants import *
 from set_colors import *
-#
 from interface2 import Ui_MainWindow
 
 
@@ -117,7 +113,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             dest_dir = os.path.join(decade, day)
             os.makedirs(dest_dir,0o755, True)
             shutil.move(source, dest_dir)
-
 
     def pictures_selection(self):
         dir_list = ['_REJECT', '_BIN', '_IGNORE', '_EXPORT']
@@ -241,8 +236,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def import_card(self):
         print('Importer la carte')
         os.chdir(CARD_DIR)
-        files_in_card_directory = os.listdir('.')
-        self.pictures_list = self.create_pictures_list(files_in_card_directory)
+        self.pictures_list = self.create_pictures_list()
         self.btn_gallery.setEnabled(True)
 
     def content_info(self, type_list):
@@ -358,7 +352,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 return [filters_list[TXT_TYPES_LIST[index]]]
         return all_filters
 
-    def create_pictures_list(self, files_in_card_directory:list):
+    def create_pictures_list(self):
         """
         Summary
             read 'self.file_list', applies filter(s), and writes 'file' in 'pictures_list' if match
@@ -368,16 +362,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         pictures_list = list()
         filters = self.get_searched_type_filters()
 
-        for file in files_in_card_directory:
-            _, ext = os.path.splitext(file)
+        for file in os.listdir(CARD_DIR):
+            base, ext_ = os.path.splitext(file)
             not_a_picture = True
             for index in range(len(filters)):
-                if bool(filters[index].match(ext)):
+                if bool(filters[index].match(ext_)):
                     pictures_list.append(file)
                     not_a_picture = False
+                    if not ext_.isupper():
+                        temp = base+ext_.upper()
+                        os.rename(file, temp)
+                        file = temp
                     self.write_console(file)    # display picture_list in console
             if not_a_picture and not os.path.isdir(file):
-                print('XXXX fichier parasite', file)    # TODO: move to the console
+                self.console_warning(f'"{file}": n\'est pas un fichier image ')
         return pictures_list    # source files
 
     def set_checked_type_buttons(self, full_type_list):
@@ -400,7 +398,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         """
         msg = '\n====> ' + message.upper() +'\n'
-        self.write_console(msg)
+        self.write_console(msg, 6)
         # return
 
     def examine_list(self, file_list):
@@ -419,18 +417,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 return type_list
         return type_list
 
-    def write_console(self, message):
-        carriage_return = '\n'
-        positions = [0]  # start position
-        positions += [i for i in range(len(message)) if message.startswith(carriage_return, i)] # add CR positions
-        positions += [len(message)] # add end of message position
-
-        for i in range(len(positions) - 1):
-            start = positions[i] + 1 if i else positions[i]
-            end = positions[i + 1]
-            self.console.addItem(message[start:end])
-
+    def write_console(self, message, color=0):
+        message = QListWidgetItem(message)
+        message.setBackground(QColor(colors[color]))
+        self.console.addItem(message)
         self.console.scrollToBottom()
+        return
+        # carriage_return = '\n'
+        # positions = [0]  # start position
+        # positions += [i for i in range(len(message)) if message.startswith(carriage_return, i)] # add CR positions
+        # positions += [len(message)] # add end of message position
+        # print('pospos', positions)
+        #
+        # for i in range(len(positions) - 1):
+        #     start = positions[i] + 1 if i else positions[i]
+        #     end = positions[i + 1]
+        #     msg = message[start:end]
+        #     print('msgmsg', msg)
+        #     msg = QListWidgetItem(message)
+        #     msg.setBackground(QColor(colors[color]))
+        #     # self.console.addItem(message[start:end])
+        #     self.console.addItem(msg)
 
     def get_pictures_in_tmp(self):
         self.pictures_in_tmp = ['./'+str(val) for val in pathlib.Path(TMP_DIR).iterdir()]
@@ -508,11 +515,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         imageio.imsave(jpeg_fullname, jpeg_img)
         meta_data = pyexiv2.ImageMetadata(jpeg_fullname)
         meta_data.read()
-        key = 'Exif.Photo.DateTimeOriginal'
-        meta_data[key] = datetime_taken
+        meta_data['Exif.Photo.DateTimeOriginal'] = str(datetime_taken)
+        meta_data['Exif.NikonFi.FileNumber'] = photo_exif.nikon_file_number
+        meta_data['Exif.Nikon3.ColorSpace'] = photo_exif.nikon_color_space
         meta_data.write()
-
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
