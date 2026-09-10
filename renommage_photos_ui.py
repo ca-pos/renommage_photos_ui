@@ -13,7 +13,7 @@ from PySide6.QtCore import (Slot, QFile, QIODevice, QTextStream)
 from PySide6.QtGui import (QColor)
 from PySide6.QtWidgets import (QMainWindow, QButtonGroup, QListWidgetItem, QApplication)
 
-from CustomClasses import (GalleryDialog)
+from CustomClasses import (GalleryDialog, PictureWithInfo)
 from PhotoExif import PhotoExif
 from constants import *
 from set_colors import *
@@ -363,19 +363,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         filters = self.get_searched_type_filters()
 
         for file in os.listdir(CARD_DIR):
+            if os.path.isdir(file):
+                continue
             base, ext_ = os.path.splitext(file)
             not_a_picture = True
             for index in range(len(filters)):
                 if bool(filters[index].match(ext_)):
-                    pictures_list.append(file)
                     not_a_picture = False
-                    if not ext_.isupper():
+                    if not ext_.isupper():  # insure uppercase ext
                         temp = base+ext_.upper()
                         os.rename(file, temp)
                         file = temp
+                    pictures_list.append(file)
                     self.write_console(file)    # display picture_list in console
             if not_a_picture and not os.path.isdir(file):
                 self.console_warning(f'"{file}": n\'est pas un fichier image ')
+                continue
+            with_info = PictureWithInfo(file)
+        print('piclst', pictures_list)
         return pictures_list    # source files
 
     def set_checked_type_buttons(self, full_type_list):
@@ -393,12 +398,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             print a warning message to the console
         Args:
             message: str:
-            warning message to be displayer
+            warning message to be displayed
         Returns: None
 
         """
         msg = '\n====> ' + message.upper() +'\n'
-        self.write_console(msg, 6)
+        self.write_console(msg, 4)
         # return
 
     def examine_list(self, file_list):
@@ -516,8 +521,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         meta_data = pyexiv2.ImageMetadata(jpeg_fullname)
         meta_data.read()
         meta_data['Exif.Photo.DateTimeOriginal'] = str(datetime_taken)
-        meta_data['Exif.NikonFi.FileNumber'] = photo_exif.nikon_file_number
-        meta_data['Exif.Nikon3.ColorSpace'] = photo_exif.nikon_color_space
+        # meta_data['Exif.NikonFi.FileNumber'] = photo_exif.nikon_file_number
+        # meta_data['Exif.Nikon3.ColorSpace'] = photo_exif.nikon_color_space
         meta_data.write()
 
 if __name__ == '__main__':

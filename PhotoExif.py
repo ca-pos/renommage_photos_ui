@@ -73,14 +73,15 @@ class PhotoExif:
             try:
                 self.nikon_file_number = meta_data['Exif.NikonFi.FileNumber'].value # type int
             except:
-                print('Pas de clef \'Exif.NikonFi.FileNumber\' dans le fichier : ', file)  # TODO: to console
-                self.nikon_file_number = 0
+                msg = f'Pas de clef \'Exif.NikonFi.FileNumber\' dans le fichier : {file}'
+                # print(msg)  # TODO: to console
+                self.nikon_file_number = -1
             try:
                 self.nikon_color_space = meta_data['Exif.Nikon3.ColorSpace'].value  # type int 1: sRGB, 2: Adobe
-                self.nikon_color_space = 0
             except:
-                print('Pas de clef \'Exif.Nikon3.ColorSpace\' dans le fichier : ', file)   # TODO: to console
-                self.nikon_color_space = None
+                msg = f'Pas de clef \'Exif.Nikon3.ColorSpace\' dans le fichier : {file}'
+                # print(msg)   # TODO: to console
+                self.nikon_color_space = -1
         else:
             self.nikon_file_number = None
             self.nikon_color_space = None

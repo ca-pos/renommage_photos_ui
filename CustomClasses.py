@@ -1,4 +1,4 @@
-import sys, os
+import sys, os, datetime
 import re
 
 from PySide6.QtWidgets import (QApplication, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox, QDialog,
@@ -64,9 +64,7 @@ class GalleryDialog(QDialog):
 
     def w2(self, rank):
         return self.gallery.w(rank)
-
 #################################################################################
-
 class Display(QScrollArea):
     def __init__(self, gallery) -> None:
         super().__init__()
@@ -75,9 +73,7 @@ class Display(QScrollArea):
         self.setStyleSheet('background-color: #808080')
         self.setWidget(gallery)
         self.setWidgetResizable(True)
-
 #################################################################################
-
 class Controls(QWidget):
     sliced = Signal(bool)
     cleared = Signal(bool)
@@ -131,9 +127,7 @@ class Controls(QWidget):
     @Slot(result=bool)
     def _slice(self, event: int):
         self.sliced.emit(True)
-
 #################################################################################
-
 class OriginalName:
     """Try to find the original name of the file"""
 
@@ -150,13 +144,46 @@ class OriginalName:
                 break
             else:
                 exif = PhotoExif(file)
-                self._original_name = 'XXX_0000'
+                self._original_name = 'XXX_0000' # TODO:change for None or '' in future version
 
 
     @property
     def original_name(self):
         """Essai de retrouver le nom original du fichier"""
         return self._original_name
+#################################################################################
+class PictureWithInfo:
+    """
+    name (from camera), nikon_filename,  nikon_color_space, jpeg, thumbnail title
+    """
+    def __init__(self, picture):
+        self._picture = picture
+
+        # print('...', self._picture)
+        exif = PhotoExif(self._picture)
+        # year, month, day, hour, minute, second = list(map(int, exif.date_time.split()))
+        # datetime_taken = datetime.datetime(year, month, day, hour, minute, second)
+        # print('dtak', datetime_taken, exif.date)
+        self.original_name = OriginalName(picture)
+        if self.original_name.original_name == 'XXX_0000':# TODO: to be changed in future version (see OriginalName)
+            if not (exif.nikon_file_number == -1 or exif.nikon_color_space == -1):
+                print(self._picture, exif.nikon_file_number, 'possible')
+            elif not exif.nikon_color_space == -1:
+                print(self._picture, exif.nikon_file_number, 'sans color space')
+            else:
+                print(self._picture, exif.nikon_file_number, 'impossible')
+        self.nikon_color_space = exif.nikon_color_space
+        self.nikon_file_number = exif.nikon_file_number
+
+
+    # @property
+    # def picture(self):
+    #     return self._picture
+    #
+    # @picture.setter
+    # def picture(self, value):
+    #     self._picture = value
+
 
 #################################################################################
 
