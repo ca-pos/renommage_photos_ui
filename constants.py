@@ -43,6 +43,7 @@ MSG_IMPORT_TYPE = 'Importation des fichiers '
 MSG_PRESS_EXECUTE = "Cliquez sur le bouton 'Exécuter' pour effectuer l'importation"
 MSG_SELECT_TYPE_TO_IMPORT = "Sinon, choisir le type d'images à importer puis ...\n"
 MSG_NO_PICTURE = 'Aucun fichier image dans ce répertoire'
+MSG_CREATE_TMP_LIST = '\nListe temporaire créée\n'
 MSG_GROUP_NAME_MISSING = "N'entrez pas un nom vide"
 MSG_NO_EXIF = ': pas d\'exif !'
 MSG_END = '==== Terminé ===='

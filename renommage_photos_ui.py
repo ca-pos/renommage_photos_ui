@@ -221,7 +221,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             else:
                 msg = f'{ext} : extension non prévue !'
                 self.console_warning(msg)
-        self.write_console('Liste temporaire créée')
+        self.write_console(MSG_CREATE_TMP_LIST, 1)
         self.get_pictures_in_tmp()
         gallery_dialog = GalleryDialog(self.pictures_in_tmp)
         gallery_dialog.exec()
@@ -370,18 +370,26 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             for index in range(len(filters)):
                 if bool(filters[index].match(ext_)):
                     not_a_picture = False
-                    if not ext_.isupper():  # insure uppercase ext
-                        temp = base+ext_.upper()
-                        os.rename(file, temp)
-                        file = temp
+                    file = self.normalize_ext(file)
                     pictures_list.append(file)
                     self.write_console(file)    # display picture_list in console
-            if not_a_picture and not os.path.isdir(file):
+            if not_a_picture:
                 self.console_warning(f'"{file}": n\'est pas un fichier image ')
                 continue
             with_info = PictureWithInfo(file)
         print('piclst', pictures_list)
         return pictures_list    # source files
+
+    @staticmethod
+    def normalize_ext(file: str) -> str:
+        base, ext_ = os.path.splitext(file)
+        if not ext_.isupper():
+            ext_ = ext_.upper() #insure uppercase ext
+        if ext_ == 'JPEG':
+            ext_ = JPG_EXT  # JPEG -> JPG
+        temp = base+ext_
+        os.rename(file, temp)
+        return temp
 
     def set_checked_type_buttons(self, full_type_list):
         """

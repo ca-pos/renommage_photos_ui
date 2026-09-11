@@ -136,6 +136,7 @@ class OriginalName:
         :param current_name: name of the file in which the original is to be found
         """
         self._original_name = ''
+        # add more regex if needed
         regex = (r'.*(_DSC\d\d\d\d)\D', r'.*(DSC_\d\d\d\d)\D', r'.*(IMG_\d{4,4})\D')
         for r in regex:
             on = re.findall(r, file)
@@ -143,7 +144,6 @@ class OriginalName:
                 self._original_name = on[0]
                 break
             else:
-                exif = PhotoExif(file)
                 self._original_name = 'XXX_0000' # TODO:change for None or '' in future version
 
 
@@ -164,17 +164,22 @@ class PictureWithInfo:
         # year, month, day, hour, minute, second = list(map(int, exif.date_time.split()))
         # datetime_taken = datetime.datetime(year, month, day, hour, minute, second)
         # print('dtak', datetime_taken, exif.date)
-        self.original_name = OriginalName(picture)
-        if self.original_name.original_name == 'XXX_0000':# TODO: to be changed in future version (see OriginalName)
-            if not (exif.nikon_file_number == -1 or exif.nikon_color_space == -1):
-                print(self._picture, exif.nikon_file_number, 'possible')
-            elif not exif.nikon_color_space == -1:
-                print(self._picture, exif.nikon_file_number, 'sans color space')
-            else:
-                print(self._picture, exif.nikon_file_number, 'impossible')
+        self.name_from_camera = OriginalName(picture)
         self.nikon_color_space = exif.nikon_color_space
         self.nikon_file_number = exif.nikon_file_number
+        if self.name_from_camera.original_name == 'XXX_0000':# TODO: to be changed in future version (see OriginalName)
+            self.original_name = self.create_missing_name(self.nikon_file_number, self.nikon_color_space)
+            print('sonson', self.original_name)
 
+    def create_missing_name(self, file_number, color_space):
+        if file_number == -1:
+            letter_part = 'XXX-'
+            num_part = '0000'
+        else:
+            letter_part = '_DSC' if color_space == 1 else 'DSC_' if color_space == 2 else 'DSC-'
+            num_part = str(file_number)
+
+        return letter_part+num_part
 
     # @property
     # def picture(self):
