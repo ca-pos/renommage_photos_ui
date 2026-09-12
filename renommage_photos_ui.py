@@ -263,58 +263,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.write_console(MSG_PRESS_EXECUTE)
         return True
 
-    # def open_dir(self):
-    #     """
-    #     Summary
-    #         Open directory containing the pictures to process
-    #     Return
-    #         list: list of all the files in the directory, excluding subdirectories
-    #     """
-    #     # open the dialog window for folder selection
-    #     file_dialog = QFileDialog(self)
-    #     file_dialog.setWindowTitle("Répertoire des photos à renommer")
-    #     file_dialog.setFileMode(QFileDialog.FileMode.Directory)
-    #     file_dialog.setViewMode(QFileDialog.ViewMode.List)
-    #     file_dialog.setDirectory(r'/home/camille/Images/_Importation/CARTE/')
-    #     os.chdir('/home/camille/Images/_Importation/CARTE/')
-    #     if file_dialog.exec():
-    #         selected_directory = file_dialog.selectedFiles()[0]
-    #         os.chdir(selected_directory)
-    #         self.console.addItem( 'Contenu du répertoire : ' + selected_directory) # and display it
-    #     else:   # cancel button was pressed by user
-    #         return None
-    #     # display the content of the folder in console and save it in file_list
-    #     file_list = list()
-    #     for file in os.listdir('.'):
-    #         if not os.path.isdir(file):
-    #             if ' ' in file:                         # if file name contains spaces ...
-    #                 temp = self.suppress_spaces(file)   # suppress extra ones
-    #                 temp = temp.replace(' ', '_')       # and replaces with underscores
-    #                 os.rename(file, temp)               # then, renames file
-    #                 file = temp
-    #             base, _ = os.path.splitext(file)
-    #             new_name = base+JPG_EXT
-    #             # print('====================>', new_name, file, os.listdir(CARD_DIR), os.getcwd())
-    #             os.rename(file, new_name)
-    #             file_list.append(abspath(new_name))
-    #     file_list.sort()
-    #     print(file_list)
-    #
-    #     rank = 1
-    #     for file in file_list:
-    #         rank_str = str("{:03d}".format(rank)) + ':  '
-    #         self.console.addItem( rank_str+basename(file))
-    #         rank += 1
-    #
-    #     # ask confirmation
-    #     dlg = AcceptDialog()
-    #     dlg.setWindowTitle('Choisir le répertoire')
-    #
-    #     if not dlg.exec(): # not the right directory, returned list is emptied
-    #         file_list = []
-    #
-    #     return file_list # all files, pictures and others
-
     def set_searched_type(self, type_list):
         """
         set 'checked' of 'type buttons' according to the content of the directory: NEF, JPG, BOTH or NONE
@@ -376,7 +324,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if not_a_picture:
                 self.console_warning(f'"{file}": n\'est pas un fichier image ')
                 continue
-            with_info = PictureWithInfo(file)
+            # with_info = PictureWithInfo(file)
         print('piclst', pictures_list)
         return pictures_list    # source files
 
@@ -385,7 +333,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         base, ext_ = os.path.splitext(file)
         if not ext_.isupper():
             ext_ = ext_.upper() #insure uppercase ext
-        if ext_ == 'JPEG':
+        if ext_ == '.JPEG':
             ext_ = JPG_EXT  # JPEG -> JPG
         temp = base+ext_
         os.rename(file, temp)
@@ -454,7 +402,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def get_pictures_in_tmp(self):
         self.pictures_in_tmp = ['./'+str(val) for val in pathlib.Path(TMP_DIR).iterdir()]
-        # print('pitpit', self.pictures_in_tmp)
+        print('pitpit', self.pictures_in_tmp)
         tmp_dict = dict()
         for picture in self.pictures_in_tmp: # create a dict {datetime: picture path}
             if not JPG_EXT in picture or BLURRED in picture:    # skip blurred jpeg and get_flag files

@@ -1,5 +1,6 @@
-import sys, os, datetime
-import re
+import sys, os, random, string, re, rawpy
+import imageio.v3 as imageio
+from PIL import Image
 
 from PySide6.QtWidgets import (QApplication, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox, QDialog,
                                QScrollArea, QWidget)
@@ -154,32 +155,72 @@ class OriginalName:
 #################################################################################
 class PictureWithInfo:
     """
-    name (from camera), nikon_filename,  nikon_color_space, jpeg, thumbnail title
+    name (from camera), nikon_file_number,  nikon_color_space, jpeg, thumbnail title,
+    comment (that is, modified name of the file if any)
+    NOTE: most of this code is for future versions
     """
+    random_letter_part = None
+    num_part_for_random = 1
     def __init__(self, picture):
         self._picture = picture
-
-        # print('...', self._picture)
+        self.comment, ext_ = os.path.splitext(self._picture)
         exif = PhotoExif(self._picture)
         # year, month, day, hour, minute, second = list(map(int, exif.date_time.split()))
         # datetime_taken = datetime.datetime(year, month, day, hour, minute, second)
         # print('dtak', datetime_taken, exif.date)
-        self.name_from_camera = OriginalName(picture)
-        self.nikon_color_space = exif.nikon_color_space
-        self.nikon_file_number = exif.nikon_file_number
+        self.name_from_camera = OriginalName(self._picture)
         if self.name_from_camera.original_name == 'XXX_0000':# TODO: to be changed in future version (see OriginalName)
-            self.original_name = self.create_missing_name(self.nikon_file_number, self.nikon_color_space)
-            print('sonson', self.original_name)
+            self.original_name = self.create_missing_name(exif.nikon_file_number, exif.nikon_color_space)
+        else:
+            self.original_name = self.name_from_camera.original_name
+        try:
+            with rawpy.imread(self._picture) as raw_img:
+                self.jpg_img = raw_img.postprocess()
+                # os.chdir(EXPORT_DIR_ABS)
+                # imageio.imwrite(self.original_name+JPG_EXT, self.jpg_img)
+                # os.chdir(CARD_DIR)
+        except rawpy.LibRawFileUnsupportedError:
+            if not ext_ == JPG_EXT:
+                sys.exit(f'Fichier non pris en charge {self._picture}') # should never occur
+            with open(self._picture, 'rb') as jpg_img:
+                self.jpg_img = imageio.imread(self._picture)
+                # os.chdir(EXPORT_DIR_ABS)
+                # imageio.imwrite(self.original_name+JPG_EXT, self.jpg_img)
+                # os.chdir(CARD_DIR)
+    # @property
+    # def picture(self):
+    #     return self._picture
+    #
+    # @picture.setter
+    # def picture(self, value):
+    #     self._picture = value
 
     def create_missing_name(self, file_number, color_space):
         if file_number == -1:
-            letter_part = 'XXX-'
-            num_part = '0000'
+            if not PictureWithInfo.random_letter_part:
+                letter_part = self.created_random_letter_part()
+                PictureWithInfo.random_letter_part = letter_part
+            else:
+                letter_part = PictureWithInfo.random_letter_part
+            num_part = f'{PictureWithInfo.num_part_for_random:04d}'
+            PictureWithInfo.num_part_for_random += 1
         else:
             letter_part = '_DSC' if color_space == 1 else 'DSC_' if color_space == 2 else 'DSC-'
             num_part = str(file_number)
 
         return letter_part+num_part
+
+    @staticmethod
+    def created_random_letter_part():
+        uppercase_letters = string.ascii_uppercase
+        letters = ''
+        while True:
+            for index in range(3):
+                letters += uppercase_letters[random.randint(0, 25 )]
+            if not (letters == 'DSC' or letters == 'IMG'):
+                return letters+'-'
+
+
 
     # @property
     # def picture(self):
@@ -198,7 +239,6 @@ if __name__ == '__main__':
     pictures = os.listdir('./tmp')
     pictures = ['./tmp/' + val for val in pictures]
     pictures.sort()
-
     gallery_dialog = GalleryDialog(pictures)
     gallery_dialog.show()
 
