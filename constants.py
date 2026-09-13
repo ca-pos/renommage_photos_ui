@@ -40,13 +40,15 @@ EXPORT_DIR_ABS = CARD_DIR+EXPORT_DIR
 # MESSAGES
 MSG_IMPORT_ALL = 'Importation de tous les fichiers images ...'
 MSG_IMPORT_TYPE = 'Importation des fichiers '
+MSG_CARD_READING_DONE = 'Lecture de la carte terminée'
 MSG_PRESS_EXECUTE = "Cliquez sur le bouton 'Exécuter' pour effectuer l'importation"
 MSG_SELECT_TYPE_TO_IMPORT = "Sinon, choisir le type d'images à importer puis ...\n"
-MSG_NO_PICTURE = 'Aucun fichier image dans ce répertoire'
-MSG_CREATE_TMP_LIST = '\nListe temporaire créée\n'
+MSG_NO_PICTURE = '\nAucun fichier image dans ce répertoire\n'
+MSG_FILE_READING = 'Lecture des fichiers sur la carte'
+MSG_CREATE_TMP_LIST = 'Liste temporaire créée'
 MSG_GROUP_NAME_MISSING = "N'entrez pas un nom vide"
-MSG_NO_EXIF = ': pas d\'exif !'
-MSG_END = '==== Terminé ===='
+MSG_NO_EXIF = ': pas d\'exif dans ce fichier. Il sera déplacé dans le répertoire _IGNORE !'.upper()
+MSG_END = '\n==== Terminé ====\n'.upper()
 
 # SIZE CONSTANTS
 DISPLAY_HEIGHT = 720

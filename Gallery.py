@@ -53,12 +53,6 @@ class Gallery(QWidget):
             th.selected.connect(partial(self.thumb_selected, th.rank))
             th.colored.connect(partial(self.change_group_bg_color, th.rank))
         self.number_of_thumbnails = i_thumb+1
-        # for i in range(self.number_of_thumbnails):
-        #     print('------------------->', self.w(i+1).exif.original_name,
-        #           self.w(i+1).exif.compressed_date,
-        #           self.w(i+1).exif.date)
-
-        # process signals from controls
         controls.sliced.connect(self.slice_date)
         controls.cleared.connect(self.clear_selection)
 
@@ -152,8 +146,6 @@ class Gallery(QWidget):
             flag = not self.w(rank).get_selection()
             self.w(rank).set_selection(flag)
             return
-
-        # print('--->', self.checked_list) #<<<
 
         length = len(self.checked_list)
         if length == 0:

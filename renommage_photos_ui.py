@@ -12,6 +12,7 @@ import pyexiv2
 from PySide6.QtCore import (Slot, QFile, QIODevice, QTextStream)
 from PySide6.QtGui import (QColor)
 from PySide6.QtWidgets import (QMainWindow, QButtonGroup, QListWidgetItem, QApplication)
+from numpy.f2py.auxfuncs import process_f2cmap_dict
 
 from CustomClasses import (GalleryDialog, PictureWithInfo)
 from PhotoExif import PhotoExif
@@ -52,13 +53,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # note: if more types are added, 'rb_all' must remain the last one
         self.type_radiobuttons_dict = {NEF_TXT: self.rb_nef, JPG_TXT: self.rb_jpg, ALL_TXT: self.rb_all}
 
-        # initialize date suffix combobox. TODO: probably not needed any longer
-        # self.cbx_date_suffix.setPlaceholderText('Choisir')
-        # self.cbx_date_suffix.addItem('Aucun')
-        # self.cbx_date_suffix.setCurrentIndex(3)
-        # for suffix in range(0, 26):
-        #     self.cbx_date_suffix.addItem(string.ascii_lowercase[suffix])
-
         # connect buttons
         # BTN
         self.btn_gallery.clicked.connect(self.show_gallery)                 # show gallery
@@ -69,12 +63,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.btn_exec.clicked.connect(self.execute)                         # execute chosen task
         self.btn_exec.setEnabled(False)
         self.btn_import.clicked.connect(self.import_card)                   # import button
-        # radiobuttons (RB)
-        # self.rb_nef.clicked.connect(self.type_rb_clicked)                    # choose which type of picture not used yet
-        # self.rb_jpg.clicked.connect(self.type_rb_clicked)
-        # self.rb_all.clicked.connect(self.type_rb_clicked)
-        # group name edit
-        # self.edt_gname.editingFinished.connect(self.gname_done)     # group name entered
 
         # clear everything on start, should be useless in final
         starting_dir = os.getcwd()
@@ -98,9 +86,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def execute(self):
         self.pictures_selection()
         self.pictures_pre_sorted()
+        self.write_console(MSG_END, INFO_COLOR_ID )
 
     def pictures_pre_sorted(self):
-        print('---->', self.pictures_with_date_and_selection)
         os.chdir(PRE_SORT_DIR)
         for key in self.pictures_with_date_and_selection.keys():
             base, _ = os.path.splitext(key)
@@ -142,10 +130,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     self.move_file(root, BIN_DIR, ext)
 
     def move_file(self, root, dest_dir, go_to):
-        # print('m2fm2f', os.getcwd(), root, dest_dir, go_to)
 
         if go_to == JPG_EXT:
-            # shortname = '****_'+root
             file_to_move = root+go_to
         else:
             file_to_move = self.find_file_in_list_orig(root)
@@ -170,38 +156,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return filename
         return None
 
-    # @Slot()
-    # def prepare_task(self, btn_id):
-    #     """
-    #     Summary
-    #         'prepare' common trunk for all tasks (select folder and set searched type(s) according to its content)
-    #     Args
-    #         btn_id: int: task id
-    #     Return
-    #         None
-    #     """
-    #     self.pictures_list = [] # force reading in 'execute' or 'show_gallery' to get rid of ancient values
-    #     self.task_to_do = btn_id    # for later use by 'execute' function
-    #     files_list = self.open_dir()
-    #     if files_list:
-    #         type_list = self.examine_list(files_list)    # find folder content, NEF, JPG, etc.
-    #     else:   # no file in the folder ou 'NO' response from the user
-    #         return
-    #     self.files_list = files_list    # TODO: self.file_list could be set from self.open_dir !
-    #     self.set_searched_type(type_list)           # set searched type according to folder content
-    #     if self.content_info(type_list):            # display info about directory content (True if any pictures in it)
-    #         self.btn_exec.setEnabled(True)          # enable exec and gallery buttons ...
-    #         self.btn_gallery.setEnabled(True)       # unless no picture found in folder
-
-    # @Slot()  #<<<
-    # def type_rb_clicked(self):
-    #     pass
-    # rb = self.sender()
-    # self.searched_type = NEF_ID if rb.isChecked() else JPG_ID
-
     @Slot()
     def show_gallery(self):
         print('Show Gallery')
+        # exit()
         os.makedirs(TMP_DIR, exist_ok=True) # creates temporary folder to hold jpeg (original or from nef)
         self.get_pictures_in_tmp()
         for photo in self.pictures_list:
@@ -221,7 +179,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             else:
                 msg = f'{ext} : extension non prévue !'
                 self.console_warning(msg)
-        self.write_console(MSG_CREATE_TMP_LIST, 1)
+        self.write_console(MSG_CREATE_TMP_LIST, INFO_COLOR_ID)
         self.get_pictures_in_tmp()
         gallery_dialog = GalleryDialog(self.pictures_in_tmp)
         gallery_dialog.exec()
@@ -235,8 +193,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def import_card(self):
         print('Importer la carte')
+        self.write_console(MSG_FILE_READING, INFO_COLOR_ID)
         os.chdir(CARD_DIR)
         self.pictures_list = self.create_pictures_list()
+        if self.pictures_list:
+            self.write_console(MSG_CARD_READING_DONE, INFO_COLOR_ID)
+        else:
+            self.write_console(MSG_NO_PICTURE, WARNING_COLOR_ID)
         self.btn_gallery.setEnabled(True)
 
     def content_info(self, type_list):
@@ -325,7 +288,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.console_warning(f'"{file}": n\'est pas un fichier image ')
                 continue
             # with_info = PictureWithInfo(file)
-        print('piclst', pictures_list)
+            # with_info.modifier = 'a'
+            # print('credat', with_info.create_thumbnail_title())
         return pictures_list    # source files
 
     @staticmethod
@@ -359,7 +323,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         """
         msg = '\n====> ' + message.upper() +'\n'
-        self.write_console(msg, 4)
+        self.write_console(msg, WARNING_COLOR_ID)
         # return
 
     def examine_list(self, file_list):
@@ -378,46 +342,28 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 return type_list
         return type_list
 
-    def write_console(self, message, color=0):
+    def write_console(self, message, color=WHITE_ID):
         message = QListWidgetItem(message)
         message.setBackground(QColor(colors[color]))
         self.console.addItem(message)
         self.console.scrollToBottom()
         return
-        # carriage_return = '\n'
-        # positions = [0]  # start position
-        # positions += [i for i in range(len(message)) if message.startswith(carriage_return, i)] # add CR positions
-        # positions += [len(message)] # add end of message position
-        # print('pospos', positions)
-        #
-        # for i in range(len(positions) - 1):
-        #     start = positions[i] + 1 if i else positions[i]
-        #     end = positions[i + 1]
-        #     msg = message[start:end]
-        #     print('msgmsg', msg)
-        #     msg = QListWidgetItem(message)
-        #     msg.setBackground(QColor(colors[color]))
-        #     # self.console.addItem(message[start:end])
-        #     self.console.addItem(msg)
 
     def get_pictures_in_tmp(self):
         self.pictures_in_tmp = ['./'+str(val) for val in pathlib.Path(TMP_DIR).iterdir()]
-        print('pitpit', self.pictures_in_tmp)
         tmp_dict = dict()
         for picture in self.pictures_in_tmp: # create a dict {datetime: picture path}
             if not JPG_EXT in picture or BLURRED in picture:    # skip blurred jpeg and get_flag files
                 continue
             exif = PhotoExif(picture)
-            # print('keykey', picture) #<<<
             try:
-                key = exif.raw_date_time
+                key = exif.raw_date_time #TODO: problematic if 2 pictures are taken within 1 sec (burst mode)
             except:
                 msg = picture+MSG_NO_EXIF
                 self.console_warning(msg)
                 root, ext = os.path.splitext(picture)
                 ignore_file = root + IGNORE_EXT
                 os.remove(root+GET_EXT)
-                # print('ignign', root)
                 with open(ignore_file, 'w') as f:
                     f.write(msg)
                 continue
@@ -425,7 +371,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         sorted_tmp_dict = dict(sorted(tmp_dict.items()))    # sort dict as a function of key (i.e. datetime)
         self.pictures_in_tmp = [val for val in sorted_tmp_dict.values()] # transfer datetime sorted values to
-        # self.pictures_in_tmp
 
     @staticmethod
     def get_type_filters():
@@ -477,8 +422,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         meta_data = pyexiv2.ImageMetadata(jpeg_fullname)
         meta_data.read()
         meta_data['Exif.Photo.DateTimeOriginal'] = str(datetime_taken)
-        # meta_data['Exif.NikonFi.FileNumber'] = photo_exif.nikon_file_number
-        # meta_data['Exif.Nikon3.ColorSpace'] = photo_exif.nikon_color_space
         meta_data.write()
 
 if __name__ == '__main__':

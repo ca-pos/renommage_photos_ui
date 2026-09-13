@@ -1,4 +1,4 @@
-import sys, os, random, string, re, rawpy
+import sys, os, random, string, re, rawpy, datetime
 import imageio.v3 as imageio
 from PIL import Image
 
@@ -155,6 +155,7 @@ class OriginalName:
 #################################################################################
 class PictureWithInfo:
     """
+    Receive file name. Must be in the CARD directory
     name (from camera), nikon_file_number,  nikon_color_space, jpeg, thumbnail title,
     comment (that is, modified name of the file if any)
     NOTE: most of this code is for future versions
@@ -164,10 +165,10 @@ class PictureWithInfo:
     def __init__(self, picture):
         self._picture = picture
         self.comment, ext_ = os.path.splitext(self._picture)
+        modifier = ''
+        self._modifier = modifier
+
         exif = PhotoExif(self._picture)
-        # year, month, day, hour, minute, second = list(map(int, exif.date_time.split()))
-        # datetime_taken = datetime.datetime(year, month, day, hour, minute, second)
-        # print('dtak', datetime_taken, exif.date)
         self.name_from_camera = OriginalName(self._picture)
         if self.name_from_camera.original_name == 'XXX_0000':# TODO: to be changed in future version (see OriginalName)
             self.original_name = self.create_missing_name(exif.nikon_file_number, exif.nikon_color_space)
@@ -187,13 +188,19 @@ class PictureWithInfo:
                 # os.chdir(EXPORT_DIR_ABS)
                 # imageio.imwrite(self.original_name+JPG_EXT, self.jpg_img)
                 # os.chdir(CARD_DIR)
-    # @property
-    # def picture(self):
-    #     return self._picture
-    #
-    # @picture.setter
-    # def picture(self, value):
-    #     self._picture = value
+        self.reversed_date = '/'.join(list(reversed(exif.date.split(' ')))) if exif.date else 'non datée'
+
+    def create_thumbnail_title(self):
+        self.reversed_date = self.reversed_date+self.modifier
+        return self.name_from_camera.original_name + ' (' + self.reversed_date + ')'
+
+    @property
+    def modifier(self):
+        return self._modifier
+
+    @modifier.setter
+    def modifier(self, value):
+        self._modifier = value
 
     def create_missing_name(self, file_number, color_space):
         if file_number == -1:
@@ -219,18 +226,6 @@ class PictureWithInfo:
                 letters += uppercase_letters[random.randint(0, 25 )]
             if not (letters == 'DSC' or letters == 'IMG'):
                 return letters+'-'
-
-
-
-    # @property
-    # def picture(self):
-    #     return self._picture
-    #
-    # @picture.setter
-    # def picture(self, value):
-    #     self._picture = value
-
-
 #################################################################################
 
 if __name__ == '__main__':

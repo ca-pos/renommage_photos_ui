@@ -3,7 +3,6 @@ import io
 import os
 #
 from PySide6.QtWidgets import (QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox)
-# from PySide6.QtGui import QPalette, QScreen
 from PySide6.QtGui import (QPixmap, QIcon, QTransform)
 from PySide6.QtCore import (Slot, Signal, Qt)
 #
@@ -160,11 +159,6 @@ class Thumbnails(QWidget):
     @rank.setter
     def rank(self, value):
         self._rank = value
-
-    # --------------------------------------------------------------------------------
-    # def update_zoom(self):
-    #     print('uuu', self._rank, self.exif.original_name) #<<<
-    #     self.zoom = ImageViewer(self._full_path_tmp, self._rank)
 
     # --------------------------------------------------------------------------------
     def get_date_suffix(self):
