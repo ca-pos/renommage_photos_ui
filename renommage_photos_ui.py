@@ -1,4 +1,4 @@
-import datetime
+import datetime, json
 import os
 import pathlib
 import re
@@ -34,6 +34,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.task_to_do = NO_TASK
         self.pictures_in_tmp = list()
         self.pictures_with_date_and_selection = dict()
+        self.num_part_for_created_names = None
+
 
         # creates type filters (TODO: get rid of get_type_filters static method !
         re_nef = re.compile(r".*\.nef$", re.IGNORECASE)  # nef filter
@@ -57,7 +59,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # BTN
         self.btn_gallery.clicked.connect(self.show_gallery)                 # show gallery
         self.btn_gallery.setEnabled(False)
-        self.btn_quit.clicked.connect(self.close)                     # leave app
+        self.btn_quit.clicked.connect(self.close_window)                    # leave app
         self.btn_clear_output.clicked.connect(self.clear_console_output)    # clear console
         # tasks pushbuttons
         self.btn_exec.clicked.connect(self.execute)                         # execute chosen task
@@ -83,10 +85,54 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         os.chdir(starting_dir)
 
     @Slot()
+    def close_window(self):
+        # do some cleaning here
+        self.close()
+
+    @Slot()
     def execute(self):
         self.pictures_selection()
         self.pictures_pre_sorted()
+        os.chdir(IMPORT_DIR)
+        if self.num_part_for_created_names:
+            with open(FILE_COUNTER, 'w') as counter:
+                json.dump(self.num_part_for_created_names, counter)
         self.write_console(MSG_END, INFO_COLOR_ID )
+
+    @Slot()
+    def show_gallery(self):
+        print('Show Gallery')
+        # exit()
+        os.makedirs(TMP_DIR, exist_ok=True) # creates temporary folder to hold jpeg (original or from nef)
+        self.get_pictures_in_tmp()
+        for photo in self.pictures_list:
+            name, ext = os.path.splitext(photo)
+            jpeg_filename = TMP_DIR + basename(name)
+            jpeg_fullname = jpeg_filename + JPG_EXT
+
+            if bool(self.type_filters[NEF_TXT].match(ext)): # nef file found
+                if not jpeg_fullname in self.pictures_in_tmp:    # jpeg not yet in TMP_DIR
+                    self.create_temporary_jpeg(photo, jpeg_fullname)    # create jpeg from NEF photo
+                    get_flag = pathlib.Path(jpeg_filename + GET_EXT)  # picture to be imported
+                    get_flag.touch()
+            elif bool(self.type_filters[JPG_TXT].match(ext)):
+                shutil.copy(photo, jpeg_fullname)
+                get_flag = pathlib.Path(jpeg_filename + GET_EXT)    # picture to be imported
+                get_flag.touch()
+            else:
+                msg = f'{ext} : extension non prévue !'
+                self.console_warning(msg)
+        self.write_console(MSG_CREATE_TMP_LIST, INFO_COLOR_ID)
+        self.get_pictures_in_tmp()
+        gallery_dialog = GalleryDialog(self.pictures_in_tmp)
+        gallery_dialog.exec()
+        self.pictures_with_date_and_selection = gallery_dialog.selected_pictures
+
+        self.btn_exec.setEnabled(True)
+
+    @Slot()
+    def clear_console_output(self):
+        self.console.clear()
 
     def pictures_pre_sorted(self):
         os.chdir(PRE_SORT_DIR)
@@ -94,13 +140,28 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             base, _ = os.path.splitext(key)
             filename = self.find_file_in_list_orig(base)
             source = os.path.join(EXPORT_DIR_ABS, filename)
+            #--------------------------------------------------------------------------
+            #TODO: to be rewritten (removed) in future version
+            # (ensure that file name comprises an XXX-, or IMG_, or _DSC pattern (nessary for renommage_photos_cli
+            # to be used next in the workflow)
+            with_info = PictureWithInfo(source)
+            camera_name = with_info.name_from_camera.original_name
+            created_camera_name = with_info.original_name
+            if camera_name.startswith('XXX_'):
+                base2, ext_ = os.path.splitext(source)
+                temp = base2+'-'+created_camera_name+ext_
+                print('srctmp', source, temp)
+                os.rename(source, temp)
+                source = temp
+            #--------------------------------------------------------------------------
             decade = self.pictures_with_date_and_selection[key][1][0]
             day = self.pictures_with_date_and_selection[key][1][1]
             modifier = self.pictures_with_date_and_selection[key][1][2]
             day = day+modifier
             dest_dir = os.path.join(decade, day)
             os.makedirs(dest_dir,0o755, True)
-            shutil.move(source, dest_dir)
+            # shutil.move(source, dest_dir)
+        self.num_part_for_created_names = with_info.num_part_for_random
 
     def pictures_selection(self):
         dir_list = ['_REJECT', '_BIN', '_IGNORE', '_EXPORT']
@@ -156,41 +217,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return filename
         return None
 
-    @Slot()
-    def show_gallery(self):
-        print('Show Gallery')
-        # exit()
-        os.makedirs(TMP_DIR, exist_ok=True) # creates temporary folder to hold jpeg (original or from nef)
-        self.get_pictures_in_tmp()
-        for photo in self.pictures_list:
-            name, ext = os.path.splitext(photo)
-            jpeg_filename = TMP_DIR + basename(name)
-            jpeg_fullname = jpeg_filename + JPG_EXT
-
-            if bool(self.type_filters[NEF_TXT].match(ext)): # nef file found
-                if not jpeg_fullname in self.pictures_in_tmp:    # jpeg not yet in TMP_DIR
-                    self.create_temporary_jpeg(photo, jpeg_fullname)    # create jpeg from NEF photo
-                    get_flag = pathlib.Path(jpeg_filename + GET_EXT)  # picture to be imported
-                    get_flag.touch()
-            elif bool(self.type_filters[JPG_TXT].match(ext)):
-                shutil.copy(photo, jpeg_fullname)
-                get_flag = pathlib.Path(jpeg_filename + GET_EXT)    # picture to be imported
-                get_flag.touch()
-            else:
-                msg = f'{ext} : extension non prévue !'
-                self.console_warning(msg)
-        self.write_console(MSG_CREATE_TMP_LIST, INFO_COLOR_ID)
-        self.get_pictures_in_tmp()
-        gallery_dialog = GalleryDialog(self.pictures_in_tmp)
-        gallery_dialog.exec()
-        self.pictures_with_date_and_selection = gallery_dialog.selected_pictures
-
-        self.btn_exec.setEnabled(True)
-
-    @Slot()
-    def clear_console_output(self):
-        self.console.clear()
-
     def import_card(self):
         print('Importer la carte')
         self.write_console(MSG_FILE_READING, INFO_COLOR_ID)
@@ -202,47 +228,47 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.write_console(MSG_NO_PICTURE, WARNING_COLOR_ID)
         self.btn_gallery.setEnabled(True)
 
-    def content_info(self, type_list):
-        """
-        Summary
-            provide console info about the content of the selected folder
-        Args:
-            type_list:
-                list(bool) tells which type radiobutton is checked
-        Returns:
-            'False' if no picture files in the folder, 'True' otherwise
-        """
-        if type_list == [False]*len(type_list):
-            self.console_warning(MSG_NO_PICTURE)
-            return False
-        if type_list[-1]:
-            self.console_warning(MSG_IMPORT_ALL)
-            self.write_console(MSG_SELECT_TYPE_TO_IMPORT)
-        else:
-            type_ = 'NEF' if type_list[NEF_ID] else 'JPG/JPEG' if type_list[JPG_ID] else None
-            self.console_warning(MSG_IMPORT_TYPE + f'\'{type_}\'')
-            for rb in self.type_radiobuttons_dict.values():
-                rb.setEnabled(False)
-        self.write_console(MSG_PRESS_EXECUTE)
-        return True
-
-    def set_searched_type(self, type_list):
-        """
-        set 'checked' of 'type buttons' according to the content of the directory: NEF, JPG, BOTH or NONE
-        (note: the un/check job itself is done through the 'self.set_checked_type_buttons' routine)
-        :param type_list: list(bool)
-        :return: None
-        """
-        if [type_list[0]]*len(type_list) == type_list: # all values are equal either True or False
-            full_type_list = [False]*(len(self.type_radiobuttons_dict) - 1)
-            if type_list[0]:    # all True
-                full_type_list.append(True) # 'ALL button' to be checked
-            else:   # all False
-                full_type_list.append(False) # no button to be checked
-        else:
-            full_type_list = type_list  # 'type buttons' are checked according 'type_list'
-            full_type_list.append(False)    # 'ALL button' unchecked
-        self.set_checked_type_buttons(full_type_list)
+    # def content_info(self, type_list):
+    #     """
+    #     Summary
+    #         provide console info about the content of the selected folder
+    #     Args:
+    #         type_list:
+    #             list(bool) tells which type radiobutton is checked
+    #     Returns:
+    #         'False' if no picture files in the folder, 'True' otherwise
+    #     """
+    #     if type_list == [False]*len(type_list):
+    #         self.console_warning(MSG_NO_PICTURE)
+    #         return False
+    #     if type_list[-1]:
+    #         self.console_warning(MSG_IMPORT_ALL)
+    #         self.write_console(MSG_SELECT_TYPE_TO_IMPORT)
+    #     else:
+    #         type_ = 'NEF' if type_list[NEF_ID] else 'JPG/JPEG' if type_list[JPG_ID] else None
+    #         self.console_warning(MSG_IMPORT_TYPE + f'\'{type_}\'')
+    #         for rb in self.type_radiobuttons_dict.values():
+    #             rb.setEnabled(False)
+    #     self.write_console(MSG_PRESS_EXECUTE)
+    #     return True
+    #
+    # def set_searched_type(self, type_list):
+    #     """
+    #     set 'checked' of 'type buttons' according to the content of the directory: NEF, JPG, BOTH or NONE
+    #     (note: the un/check job itself is done through the 'self.set_checked_type_buttons' routine)
+    #     :param type_list: list(bool)
+    #     :return: None
+    #     """
+    #     if [type_list[0]]*len(type_list) == type_list: # all values are equal either True or False
+    #         full_type_list = [False]*(len(self.type_radiobuttons_dict) - 1)
+    #         if type_list[0]:    # all True
+    #             full_type_list.append(True) # 'ALL button' to be checked
+    #         else:   # all False
+    #             full_type_list.append(False) # no button to be checked
+    #     else:
+    #         full_type_list = type_list  # 'type buttons' are checked according 'type_list'
+    #         full_type_list.append(False)    # 'ALL button' unchecked
+    #     self.set_checked_type_buttons(full_type_list)
 
     def get_searched_type_filters(self):
         """
@@ -281,7 +307,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             for index in range(len(filters)):
                 if bool(filters[index].match(ext_)):
                     not_a_picture = False
-                    file = self.normalize_ext(file)
+                    file = self.normalize_name_and_ext(file)
                     pictures_list.append(file)
                     self.write_console(file)    # display picture_list in console
             if not_a_picture:
@@ -292,26 +318,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # print('credat', with_info.create_thumbnail_title())
         return pictures_list    # source files
 
-    @staticmethod
-    def normalize_ext(file: str) -> str:
-        base, ext_ = os.path.splitext(file)
-        if not ext_.isupper():
-            ext_ = ext_.upper() #insure uppercase ext
-        if ext_ == '.JPEG':
-            ext_ = JPG_EXT  # JPEG -> JPG
-        temp = base+ext_
-        os.rename(file, temp)
-        return temp
-
-    def set_checked_type_buttons(self, full_type_list):
-        """
-        task buttons are set un/checked according to the value of 'full_type_list'
-        :param full_type_list: list(bool)
-        :return: None
-        """
-        for index in range(len(self.type_radiobuttons_dict)):
-            self.type_radiobuttons_dict[TXT_TYPES_LIST[index]].setChecked(full_type_list[index])
-
+    # def set_checked_type_buttons(self, full_type_list):
+    #     """
+    #     task buttons are set un/checked according to the value of 'full_type_list'
+    #     :param full_type_list: list(bool)
+    #     :return: None
+    #     """
+    #     for index in range(len(self.type_radiobuttons_dict)):
+    #         self.type_radiobuttons_dict[TXT_TYPES_LIST[index]].setChecked(full_type_list[index])
+    #
     def console_warning(self, message):
         """
         Summary
@@ -326,22 +341,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.write_console(msg, WARNING_COLOR_ID)
         # return
 
-    def examine_list(self, file_list):
-        """
-        check the type of pictures in file_list, NEF, JPG, both or none
-        :param file_list: list: list of pictures to check
-        :return: list(bool): telling the types of files found in 'file_list'
-        """
-        type_list = [False]*(len(self.type_radiobuttons_dict) - 1) # will allow more types in the future
-        for file in file_list:
-            tmp, ext = os.path.splitext(file)
-            for index in range(len(self.type_filters)):
-                if bool(self.type_filters[TXT_TYPES_LIST[index]].match(ext)):  # filter
-                    type_list[index] = True
-            if type_list[0] and all(type_list): # type_list[0] and all others are True no need to go any further
-                return type_list
-        return type_list
-
+    # def examine_list(self, file_list):
+    #     """
+    #     check the type of pictures in file_list, NEF, JPG, both or none
+    #     :param file_list: list: list of pictures to check
+    #     :return: list(bool): telling the types of files found in 'file_list'
+    #     """
+    #     type_list = [False]*(len(self.type_radiobuttons_dict) - 1) # will allow more types in the future
+    #     for file in file_list:
+    #         tmp, ext = os.path.splitext(file)
+    #         for index in range(len(self.type_filters)):
+    #             if bool(self.type_filters[TXT_TYPES_LIST[index]].match(ext)):  # filter
+    #                 type_list[index] = True
+    #         if type_list[0] and all(type_list): # type_list[0] and all others are True no need to go any further
+    #             return type_list
+    #     return type_list
+    #
     def write_console(self, message, color=WHITE_ID):
         message = QListWidgetItem(message)
         message.setBackground(QColor(colors[color]))
@@ -373,6 +388,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pictures_in_tmp = [val for val in sorted_tmp_dict.values()] # transfer datetime sorted values to
 
     @staticmethod
+    def normalize_name_and_ext(file: str) -> str:
+        base, ext_ = os.path.splitext(file)
+        if not ext_.isupper():
+            ext_ = ext_.upper() #insure uppercase ext
+        if ext_ == '.JPEG':
+            ext_ = JPG_EXT  # JPEG -> JPG
+        temp = base+ext_
+        while temp.find(' ') >0:
+            temp = temp.replace(' ', '_')
+        os.rename(file, temp)
+        return temp
+
+    @staticmethod
     def get_type_filters():
         """
         regular expressions used to identify the different format of pictures (nef, jpg, etc.)
@@ -396,13 +424,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         while string_[0] == ' ':  # get rid of leading spaces
             string_ = string_[1:len(string_)]
-
         while string_[len(string_) - 1] == ' ':  # get rid of trailing spaces
             string_ = string_[0:len(string_) - 1]
-
         while string_.find('  ') > 0:
-            string_ = string_.replace("  ", " ")  # replace double spaces with single space
-
+            string_ = string_.replace('  ', ' ')  # replace double spaces with single space
         return string_
 
     @staticmethod

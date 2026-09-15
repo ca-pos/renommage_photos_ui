@@ -1,6 +1,5 @@
-import sys, os, random, string, re, rawpy, datetime
+import sys, os, random, string, re, rawpy, json
 import imageio.v3 as imageio
-from PIL import Image
 
 from PySide6.QtWidgets import (QApplication, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox, QDialog,
                                QScrollArea, QWidget)
@@ -155,13 +154,21 @@ class OriginalName:
 #################################################################################
 class PictureWithInfo:
     """
-    Receive file name. Must be in the CARD directory
-    name (from camera), nikon_file_number,  nikon_color_space, jpeg, thumbnail title,
-    comment (that is, modified name of the file if any)
+    Receive
+        file name
+    Returns
+        name (from camera),
+        jpeg,
+        thumbnail title,
+        comment (that is, modified name of the file if any)
+    allows to set modifier
+
     NOTE: most of this code is for future versions
     """
-    random_letter_part = None
-    num_part_for_random = 1
+    random_letter_part = None # probably to be removed in future version (see below create_missing_names)
+    with open(IMPORT_DIR+FILE_COUNTER, 'r') as counter:
+        num_part_for_random = json.load(counter)
+
     def __init__(self, picture):
         self._picture = picture
         self.comment, ext_ = os.path.splitext(self._picture)
@@ -202,11 +209,14 @@ class PictureWithInfo:
     def modifier(self, value):
         self._modifier = value
 
-    def create_missing_name(self, file_number, color_space):
+    @staticmethod
+    def create_missing_name(file_number, color_space):
         if file_number == -1:
+            # next if useful only in case of randomly generated letter part (that is, not here: letter part is XXX-)
+            # TODO: to be removed in future version if the XXX- solution is kept
             if not PictureWithInfo.random_letter_part:
-                letter_part = self.created_random_letter_part()
-                PictureWithInfo.random_letter_part = letter_part
+                letter_part = 'XXX-' #self.created_random_letter_part()
+                # PictureWithInfo.random_letter_part = letter_part
             else:
                 letter_part = PictureWithInfo.random_letter_part
             num_part = f'{PictureWithInfo.num_part_for_random:04d}'
@@ -217,15 +227,15 @@ class PictureWithInfo:
 
         return letter_part+num_part
 
-    @staticmethod
-    def created_random_letter_part():
-        uppercase_letters = string.ascii_uppercase
-        letters = ''
-        while True:
-            for index in range(3):
-                letters += uppercase_letters[random.randint(0, 25 )]
-            if not (letters == 'DSC' or letters == 'IMG'):
-                return letters+'-'
+    # @staticmethod
+    # def created_random_letter_part():
+    #     uppercase_letters = string.ascii_uppercase
+    #     letters = ''
+    #     while True:
+    #         for index in range(3):
+    #             letters += uppercase_letters[random.randint(0, 25 )]
+    #         if not (letters == 'DSC' or letters == 'IMG'):
+    #             return letters+'-'
 #################################################################################
 
 if __name__ == '__main__':

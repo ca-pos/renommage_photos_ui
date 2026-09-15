@@ -37,6 +37,9 @@ IGNORE_DIR = TMP_DIR+'_IGNORE/'
 EXPORT_DIR = TMP_DIR+'_EXPORT/'
 EXPORT_DIR_ABS = CARD_DIR+EXPORT_DIR
 
+# FILES
+FILE_COUNTER = 'counter.dat'
+
 # MESSAGES
 MSG_IMPORT_ALL = 'Importation de tous les fichiers images ...'
 MSG_IMPORT_TYPE = 'Importation des fichiers '
