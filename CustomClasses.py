@@ -9,27 +9,6 @@ from PySide6.QtCore import (Signal, Slot, Qt)
 from PhotoExif import PhotoExif
 from constants import *
 
-# class AcceptDialog(QDialog):
-#     def __init__(self):
-#         super().__init__()
-#
-#         self.buttonBox = QDialogButtonBox()
-#         self.btn_dir_ok = QPushButton('Oui')
-#         self.btn_dir_ok.clicked.connect(self.accept)
-#         self.btn_dir_wrong = QPushButton('Non')
-#         self.btn_dir_wrong.clicked.connect(self.reject)
-#
-#         layout_h = QHBoxLayout()
-#         layout_h.addWidget(self.btn_dir_wrong)
-#         layout_h.addWidget(self.btn_dir_ok)
-#         layout_v = QVBoxLayout()
-#         message = QLabel('Est-ce le bon répertoire ?')
-#         layout_v.addWidget(message)
-#         layout_v.addLayout(layout_h)
-#         self.setLayout(layout_v)
-
-#################################################################################
-
 class GalleryDialog(QDialog):
     def __init__(self, pictures):
         super().__init__()
@@ -146,7 +125,6 @@ class OriginalName:
             else:
                 self._original_name = 'XXX_0000' # TODO:change for None or '' in future version
 
-
     @property
     def original_name(self):
         """Essai de retrouver le nom original du fichier"""
@@ -154,14 +132,14 @@ class OriginalName:
 #################################################################################
 class PictureWithInfo:
     """
-    Receive
+    Receives
         file name
-    Returns
+    Provides
         name (from camera),
         jpeg,
         thumbnail title,
         comment (that is, modified name of the file if any)
-    allows to set modifier
+    Allows to set modifier
 
     NOTE: most of this code is for future versions
     """
@@ -195,6 +173,9 @@ class PictureWithInfo:
                 # os.chdir(EXPORT_DIR_ABS)
                 # imageio.imwrite(self.original_name+JPG_EXT, self.jpg_img)
                 # os.chdir(CARD_DIR)
+        except:
+            print(f'Fichier {self._picture}:exception autre que \'rawpy.LibRawFileUnsupportedError\':class '
+                  f'PictureWithInfo')
         self.reversed_date = '/'.join(list(reversed(exif.date.split(' ')))) if exif.date else 'non datée'
 
     def create_thumbnail_title(self):

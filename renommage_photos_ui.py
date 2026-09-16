@@ -94,6 +94,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pictures_selection()
         self.pictures_pre_sorted()
         os.chdir(IMPORT_DIR)
+        print('snpfcm',self.num_part_for_created_names)
         if self.num_part_for_created_names:
             with open(FILE_COUNTER, 'w') as counter:
                 json.dump(self.num_part_for_created_names, counter)
@@ -150,7 +151,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if camera_name.startswith('XXX_'):
                 base2, ext_ = os.path.splitext(source)
                 temp = base2+'-'+created_camera_name+ext_
-                print('srctmp', source, temp)
                 os.rename(source, temp)
                 source = temp
             #--------------------------------------------------------------------------
@@ -160,7 +160,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             day = day+modifier
             dest_dir = os.path.join(decade, day)
             os.makedirs(dest_dir,0o755, True)
-            # shutil.move(source, dest_dir)
+            shutil.move(source, dest_dir)
         self.num_part_for_created_names = with_info.num_part_for_random
 
     def pictures_selection(self):
@@ -169,7 +169,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         lst_temp.sort()
         for filename in lst_temp:
             root, ext = os.path.splitext(filename)
-            # print('lstlst', filename)
             match ext:
                 case '.GET':
                     os.chdir(CARD_DIR)
