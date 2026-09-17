@@ -145,7 +145,7 @@ class Thumbnails(QWidget):
         vbox.setSpacing(0)
         vbox.addStretch()
 
-        self.zoom = ImageViewer(self._full_path_tmp, self.rank)
+        self.zoom = ImageViewer(self._full_path_tmp)
         self.zoom.mask.connect(self.hide_jpeg)
 
     @staticmethod
@@ -266,7 +266,6 @@ class Thumbnails(QWidget):
 
     @Slot()
     def show_zoom(self):
-        print('show zoom', self._full_path_tmp) #<<<
         self.zoom.exec()
 
     # --------------------------------------------------------------------------------

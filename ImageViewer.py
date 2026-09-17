@@ -10,10 +10,10 @@ from constants import *
 #
 class ImageViewer(QDialog):
     mask = Signal(str)
-    def __init__(self, file_name, rank):
+    def __init__(self, file_name):
         super().__init__()
         # print('RIV', rank)  #<<<
-        self._rank = rank
+        # self._rank = rank
         self._scale_factor = 1
         self._image_label = QLabel()
         self._image_label.setScaledContents(True)
@@ -33,7 +33,7 @@ class ImageViewer(QDialog):
         btn_zoom_out = QPushButton('Dézoomer')
         btn_zoom_out.clicked.connect(self._zoom_out)
         btn_suppress = QPushButton('Masquer')
-        btn_suppress.clicked.connect(partial(self._suppress_picture, rank))
+        btn_suppress.clicked.connect(self._suppress_picture)
         btn_suppress.setEnabled(True)
 
         layout = QHBoxLayout()
@@ -88,8 +88,7 @@ class ImageViewer(QDialog):
         self._image_label.resize(self._original_pixmap_size)
         self._scale_factor = 1.0
 
-    def _suppress_picture(self, rank):
-        # print('EMITEMIT') #<<<
+    def _suppress_picture(self):
         self.mask.emit('Zoom')
         self.close()
 

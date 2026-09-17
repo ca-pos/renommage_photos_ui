@@ -42,6 +42,10 @@ class GalleryDialog(QDialog):
         self.close()
 
     def w2(self, rank):
+        """
+        w2: shorthand to access gallery object
+        w (from gallery): shorthand to access thumbnail object (widget)
+        """
         return self.gallery.w(rank)
 #################################################################################
 class Display(QScrollArea):
@@ -116,7 +120,10 @@ class OriginalName:
         """
         self._original_name = ''
         # add more regex if needed
-        regex = (r'.*(_DSC\d\d\d\d)\D', r'.*(DSC_\d\d\d\d)\D', r'.*(IMG_\d{4,4})\D')
+        regex = (r'.*(_DSC\d\d\d\d)\D',
+                 r'.*(DSC_\d\d\d\d)\D',
+                 r'.*(IMG_\d{4,4})\D',
+                 r'.*(XXX-\d{4,4})\D')
         for r in regex:
             on = re.findall(r, file)
             if on:
@@ -149,11 +156,11 @@ class PictureWithInfo:
 
     def __init__(self, picture):
         self._picture = picture
-        self.comment, ext_ = os.path.splitext(self._picture)
+        self.comment, ext_ = os.path.splitext(self._picture) #keep modified name, if any, in comment field
         modifier = ''
-        self._modifier = modifier
+        self._modifier = modifier # modifier is set in gallery, unknown at this stage, set it later as a property
 
-        exif = PhotoExif(self._picture)
+        exif = PhotoExif(self._picture) # some infos are from picture exif
         self.name_from_camera = OriginalName(self._picture)
         if self.name_from_camera.original_name == 'XXX_0000':# TODO: to be changed in future version (see OriginalName)
             self.original_name = self.create_missing_name(exif.nikon_file_number, exif.nikon_color_space)
@@ -177,6 +184,7 @@ class PictureWithInfo:
             print(f'Fichier {self._picture}:exception autre que \'rawpy.LibRawFileUnsupportedError\':class '
                   f'PictureWithInfo')
         self.reversed_date = '/'.join(list(reversed(exif.date.split(' ')))) if exif.date else 'non datée'
+        self.thumbnail_title = self.create_thumbnail_title()
 
     def create_thumbnail_title(self):
         self.reversed_date = self.reversed_date+self.modifier

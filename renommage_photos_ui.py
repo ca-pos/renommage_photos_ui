@@ -13,6 +13,7 @@ from PySide6.QtCore import (Slot, QFile, QIODevice, QTextStream)
 from PySide6.QtGui import (QColor)
 from PySide6.QtWidgets import (QMainWindow, QButtonGroup, QListWidgetItem, QApplication)
 from numpy.f2py.auxfuncs import process_f2cmap_dict
+from pathlib import Path
 
 from CustomClasses import (GalleryDialog, PictureWithInfo)
 from PhotoExif import PhotoExif
@@ -94,7 +95,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pictures_selection()
         self.pictures_pre_sorted()
         os.chdir(IMPORT_DIR)
-        print('snpfcm',self.num_part_for_created_names)
         if self.num_part_for_created_names:
             with open(FILE_COUNTER, 'w') as counter:
                 json.dump(self.num_part_for_created_names, counter)
@@ -103,7 +103,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     @Slot()
     def show_gallery(self):
         print('Show Gallery')
-        # exit()
         os.makedirs(TMP_DIR, exist_ok=True) # creates temporary folder to hold jpeg (original or from nef)
         self.get_pictures_in_tmp()
         for photo in self.pictures_list:
@@ -136,7 +135,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.console.clear()
 
     def pictures_pre_sorted(self):
-        os.chdir(PRE_SORT_DIR)
+        os.chdir(PRE_SORT_DIR_ABS)
         for key in self.pictures_with_date_and_selection.keys():
             base, _ = os.path.splitext(key)
             filename = self.find_file_in_list_orig(base)
@@ -160,6 +159,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             day = day+modifier
             dest_dir = os.path.join(decade, day)
             os.makedirs(dest_dir,0o755, True)
+            #---------------------------------------------------------------------------
+            # while files are in export dir, create a dic for later use renommage_cli
+            os.chdir(EXPORT_DIR_ABS)
+            with_info = PictureWithInfo(source)
+            name_from_camera = with_info.name_from_camera.original_name
+            jpg_img = with_info.jpg_img
+            comment = with_info.comment
+            tumb_title = with_info.thumbnail_title
+            print('winf1', with_info.name_from_camera.original_name, source)
+            os.chdir(PRE_SORT_DIR_ABS)
+            #---------------------------------------------------------------------------
             shutil.move(source, dest_dir)
         self.num_part_for_created_names = with_info.num_part_for_random
 
