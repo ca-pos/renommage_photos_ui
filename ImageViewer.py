@@ -1,6 +1,5 @@
 #
 import sys
-from functools import partial
 
 from PySide6.QtWidgets import (QDialog, QLabel, QScrollArea, QPushButton, QHBoxLayout, QVBoxLayout, QApplication)
 from PySide6.QtGui import (QGuiApplication, QImageReader, QPixmap, QTransform)
@@ -10,7 +9,7 @@ from constants import *
 #
 class ImageViewer(QDialog):
     mask = Signal(str)
-    def __init__(self, file_name):
+    def __init__(self, file_name, jpg_binary = None):
         super().__init__()
         # print('RIV', rank)  #<<<
         # self._rank = rank
@@ -52,9 +51,12 @@ class ImageViewer(QDialog):
         available_size = QGuiApplication.primaryScreen().availableSize()
         self.resize(available_size)
 
-        reader = QImageReader(self._file_name)
-        # reader.setAutoTransform(True)
-        new_image = reader.read()
+        if file_name:
+            reader = QImageReader(self._file_name)
+            # reader.setAutoTransform(True)
+            new_image = reader.read()
+        else:
+            new_image = jpg_binary
 
         self._image = new_image
         pixmap = QPixmap.fromImage(self._image)

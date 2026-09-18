@@ -1,19 +1,20 @@
-import datetime, json
-import os
+import datetime, json, re, os
 import pathlib
-import re
 import shutil
 import sys
-from os.path import (basename, abspath, isdir)
+from html.parser import commentabruptclose
+from os.path import (basename, isdir)
 
-import imageio
+import imageio.v3 as imageio
+
+# import matplotlib.pyplot as plt
+from PIL import Image
+
 import rawpy
 import pyexiv2
 from PySide6.QtCore import (Slot, QFile, QIODevice, QTextStream)
 from PySide6.QtGui import (QColor)
 from PySide6.QtWidgets import (QMainWindow, QButtonGroup, QListWidgetItem, QApplication)
-from numpy.f2py.auxfuncs import process_f2cmap_dict
-from pathlib import Path
 
 from CustomClasses import (GalleryDialog, PictureWithInfo)
 from PhotoExif import PhotoExif
@@ -35,6 +36,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.task_to_do = NO_TASK
         self.pictures_in_tmp = list()
         self.pictures_with_date_and_selection = dict()
+        self.with_info_dic = dict()
         self.num_part_for_created_names = None
 
 
@@ -96,7 +98,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pictures_pre_sorted()
         os.chdir(IMPORT_DIR)
         if self.num_part_for_created_names:
-            with open(FILE_COUNTER, 'w') as counter:
+            with open(UTIL_FILES_DIR_ABS+FILE_COUNTER, 'w') as counter:
                 json.dump(self.num_part_for_created_names, counter)
         self.write_console(MSG_END, INFO_COLOR_ID )
 
@@ -160,15 +162,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             dest_dir = os.path.join(decade, day)
             os.makedirs(dest_dir,0o755, True)
             #---------------------------------------------------------------------------
+            # TODO: see whether this is the best place to do this
             # while files are in export dir, create a dic for later use renommage_cli
-            os.chdir(EXPORT_DIR_ABS)
-            with_info = PictureWithInfo(source)
+            # os.chdir(EXPORT_DIR_ABS)
             name_from_camera = with_info.name_from_camera.original_name
-            jpg_img = with_info.jpg_img
             comment = with_info.comment
-            tumb_title = with_info.thumbnail_title
-            print('winf1', with_info.name_from_camera.original_name, source)
-            os.chdir(PRE_SORT_DIR_ABS)
+            thumb_title = with_info.thumbnail_title
+            pixmap = with_info.pixmap
+            self.with_info_dic[name_from_camera] = (comment, thumb_title)
+            pix_file = UTIL_FILES_DIR_ABS+name_from_camera+PIX_EXT
+            with open(pix_file, 'wb') as f:
+                f.write(pixmap)
+            # os.chdir(PRE_SORT_DIR_ABS)
             #---------------------------------------------------------------------------
             shutil.move(source, dest_dir)
         self.num_part_for_created_names = with_info.num_part_for_random
@@ -452,7 +457,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         with rawpy.imread(photo) as raw:
             jpeg_img = raw.postprocess()
             # thumb = raw.extract_thumb()
-        imageio.imsave(jpeg_fullname, jpeg_img)
+        imageio.imwrite(jpeg_fullname, jpeg_img)
         meta_data = pyexiv2.ImageMetadata(jpeg_fullname)
         meta_data.read()
         meta_data['Exif.Photo.DateTimeOriginal'] = str(datetime_taken)

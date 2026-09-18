@@ -1,9 +1,11 @@
-import sys, os, random, string, re, rawpy, json
+import sys, os, re, rawpy, json
+from os.path import basename
+
 import imageio.v3 as imageio
 
 from PySide6.QtWidgets import (QApplication, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox, QDialog,
                                QScrollArea, QWidget)
-from PySide6.QtGui import (QPalette, QScreen)
+from PySide6.QtGui import (QPalette, QScreen, QPixmap)
 from PySide6.QtCore import (Signal, Slot, Qt)
 
 from PhotoExif import PhotoExif
@@ -151,13 +153,14 @@ class PictureWithInfo:
     NOTE: most of this code is for future versions
     """
     random_letter_part = None # probably to be removed in future version (see below create_missing_names)
-    with open(IMPORT_DIR+FILE_COUNTER, 'r') as counter:
+    with open(UTIL_FILES_DIR_ABS+FILE_COUNTER, 'r') as counter:
         num_part_for_random = json.load(counter)
 
     def __init__(self, picture):
         self._picture = picture
-        self.comment, ext_ = os.path.splitext(self._picture) #keep modified name, if any, in comment field
+        comment, ext_ = os.path.splitext(self._picture) #keep modified name, if any, in comment field
         modifier = ''
+        self.comment = basename(comment)
         self._modifier = modifier # modifier is set in gallery, unknown at this stage, set it later as a property
 
         exif = PhotoExif(self._picture) # some infos are from picture exif
@@ -169,20 +172,26 @@ class PictureWithInfo:
         try:
             with rawpy.imread(self._picture) as raw_img:
                 self.jpg_img = raw_img.postprocess()
-                # os.chdir(EXPORT_DIR_ABS)
-                # imageio.imwrite(self.original_name+JPG_EXT, self.jpg_img)
-                # os.chdir(CARD_DIR)
+                return_dir = os.getcwd()
+                os.chdir(EXPORT_DIR_ABS)
+                pixmap = QPixmap(self.original_name+JPG_EXT)
+                imageio.imwrite(self.original_name+JPG_EXT, self.jpg_img)
+                os.chdir(return_dir)
         except rawpy.LibRawFileUnsupportedError:
             if not ext_ == JPG_EXT:
                 sys.exit(f'Fichier non pris en charge {self._picture}') # should never occur
+                exit()
             with open(self._picture, 'rb') as jpg_img:
                 self.jpg_img = imageio.imread(self._picture)
-                # os.chdir(EXPORT_DIR_ABS)
-                # imageio.imwrite(self.original_name+JPG_EXT, self.jpg_img)
-                # os.chdir(CARD_DIR)
+                return_dir = os.getcwd()
+                os.chdir(EXPORT_DIR_ABS)
+                pixmap = QPixmap(self.original_name+JPG_EXT)
+                imageio.imwrite(self.original_name+JPG_EXT, self.jpg_img)
+                os.chdir(return_dir)
         except:
             print(f'Fichier {self._picture}:exception autre que \'rawpy.LibRawFileUnsupportedError\':class '
                   f'PictureWithInfo')
+        self.pixmap = pixmap
         self.reversed_date = '/'.join(list(reversed(exif.date.split(' ')))) if exif.date else 'non datée'
         self.thumbnail_title = self.create_thumbnail_title()
 
