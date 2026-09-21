@@ -153,7 +153,7 @@ class PictureWithInfo:
     NOTE: most of this code is for future versions
     """
     random_letter_part = None # probably to be removed in future version (see below create_missing_names)
-    with open(UTIL_FILES_DIR_ABS+FILE_COUNTER, 'r') as counter:
+    with open(UTILS_FILES_DIR_ABS+FILE_COUNTER, 'r') as counter:
         num_part_for_random = json.load(counter)
 
     def __init__(self, picture):
@@ -172,32 +172,31 @@ class PictureWithInfo:
         try:
             with rawpy.imread(self._picture) as raw_img:
                 self.jpg_img = raw_img.postprocess()
-                return_dir = os.getcwd()
-                os.chdir(EXPORT_DIR_ABS)
-                pixmap = QPixmap(self.original_name+JPG_EXT)
-                imageio.imwrite(self.original_name+JPG_EXT, self.jpg_img)
-                os.chdir(return_dir)
+                # return_dir = os.getcwd()
+                # os.chdir(EXPORT_DIR_ABS)
+                # pixmap = QPixmap(self.original_name+JPG_EXT)
+                # imageio.imwrite(self.original_name+JPG_EXT, self.jpg_img)
+                # os.chdir(return_dir)
         except rawpy.LibRawFileUnsupportedError:
             if not ext_ == JPG_EXT:
                 sys.exit(f'Fichier non pris en charge {self._picture}') # should never occur
-                exit()
-            with open(self._picture, 'rb') as jpg_img:
-                self.jpg_img = imageio.imread(self._picture)
-                return_dir = os.getcwd()
-                os.chdir(EXPORT_DIR_ABS)
-                pixmap = QPixmap(self.original_name+JPG_EXT)
-                imageio.imwrite(self.original_name+JPG_EXT, self.jpg_img)
-                os.chdir(return_dir)
+            # with open(self._picture, 'rb') as jpg_img:
+            #     self.jpg_img = imageio.imread(self._picture)
+            #     return_dir = os.getcwd()
+            #     os.chdir(EXPORT_DIR_ABS)
+            #     pixmap = QPixmap(self.original_name+JPG_EXT)
+            #     imageio.imwrite(self.original_name+JPG_EXT, self.jpg_img)
+            #     os.chdir(return_dir)
         except:
             print(f'Fichier {self._picture}:exception autre que \'rawpy.LibRawFileUnsupportedError\':class '
                   f'PictureWithInfo')
-        self.pixmap = pixmap
+        # self.pixmap = pixmap
         self.reversed_date = '/'.join(list(reversed(exif.date.split(' ')))) if exif.date else 'non datée'
         self.thumbnail_title = self.create_thumbnail_title()
 
     def create_thumbnail_title(self):
         self.reversed_date = self.reversed_date+self.modifier
-        return self.name_from_camera.original_name + ' (' + self.reversed_date + ')'
+        return self.original_name + ' (' + self.reversed_date + ')'
 
     @property
     def modifier(self):

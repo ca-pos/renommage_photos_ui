@@ -39,11 +39,12 @@ EXPORT_DIR = TMP_DIR+'_EXPORT/'
 PRE_SORT_DIR_ABS = IMPORT_DIR+'PRÉ-TRI'
 EXPORT_DIR_ABS = CARD_DIR+EXPORT_DIR
 TEMP_DIR_ABS = CARD_DIR+TMP_DIR
-UTIL_FILES_DIR_ABS = IMPORT_DIR+'util_files/'
+UTILS_FILES_DIR_ABS = IMPORT_DIR+'UTILS_FILES/'
+JPG_FOR_RENAME_CLI_DIR_ABS = UTILS_FILES_DIR_ABS+'JPG/'
 
 # FILES
 FILE_COUNTER = 'counter.dat'
-FILE_WITH_INFO = 'with_info.dic'
+FILE_WITH_INFO = 'with_info.json'
 
 # MESSAGES
 MSG_IMPORT_ALL = 'Importation de tous les fichiers images ...'
@@ -87,6 +88,4 @@ ZOOM_OUT_RATIO = .92
 
 # size of iphone jpeg: (1354, 2323)
 # size of NEF-embedded thumb (6000, 4000)
-# STEP_0 = '/home/camille/tmp/0. Tri & Renommage/tests_a_jeter/step_0/'      # to be changed in the final version
-# STEP_1 = '/home/camille/tmp/0. Tri & Renommage/tests_a_jeter/step_1/'    # to be changed in the final version
 

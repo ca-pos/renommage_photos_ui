@@ -12,7 +12,7 @@ from PIL import Image
 
 import rawpy
 import pyexiv2
-from PySide6.QtCore import (Slot, QFile, QIODevice, QTextStream)
+from PySide6.QtCore import (Slot, QFile, QIODevice, QTextStream, QDataStream)
 from PySide6.QtGui import (QColor)
 from PySide6.QtWidgets import (QMainWindow, QButtonGroup, QListWidgetItem, QApplication)
 
@@ -39,7 +39,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.with_info_dic = dict()
         self.num_part_for_created_names = None
 
-
+        # clean all previous files
+        print('do cleaning')
+        self.do_cleaning()
+        #--------------------------------------------------------------
+        # TODO: only for development, remove in final version
+        return_dir = os.getcwd()
+        os.chdir(IMPORT_DIR+'VRAC/_vrac')
+        for file in os.listdir():
+            shutil.copy(file, CARD_DIR+file)
+        os.chdir(return_dir)
+        #--------------------------------------------------------------
         # creates type filters (TODO: get rid of get_type_filters static method !
         re_nef = re.compile(r".*\.nef$", re.IGNORECASE)  # nef filter
         re_jpg = re.compile(r".*\.jpe?g$", re.IGNORECASE)  # jpg filter
@@ -98,8 +108,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pictures_pre_sorted()
         os.chdir(IMPORT_DIR)
         if self.num_part_for_created_names:
-            with open(UTIL_FILES_DIR_ABS+FILE_COUNTER, 'w') as counter:
+            with open(UTILS_FILES_DIR_ABS+FILE_COUNTER, 'w') as counter:
                 json.dump(self.num_part_for_created_names, counter)
+        with open(UTILS_FILES_DIR_ABS+FILE_WITH_INFO, 'w') as dic:
+            json.dump(self.with_info_dic, dic)
         self.write_console(MSG_END, INFO_COLOR_ID )
 
     @Slot()
@@ -144,7 +156,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             source = os.path.join(EXPORT_DIR_ABS, filename)
             #--------------------------------------------------------------------------
             #TODO: to be rewritten (removed) in future version
-            # (ensure that file name comprises an XXX-, or IMG_, or _DSC pattern (nessary for renommage_photos_cli
+            # (ensure that file name comprises an XXX-, or IMG_, or _DSC pattern (necessary for renommage_photos_cli
             # to be used next in the workflow)
             with_info = PictureWithInfo(source)
             camera_name = with_info.name_from_camera.original_name
@@ -163,24 +175,35 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             os.makedirs(dest_dir,0o755, True)
             #---------------------------------------------------------------------------
             # TODO: see whether this is the best place to do this
-            # while files are in export dir, create a dic for later use renommage_cli
-            # os.chdir(EXPORT_DIR_ABS)
-            name_from_camera = with_info.name_from_camera.original_name
+            #  while files are in export dir, create a dic for later use renommage_cli
+            name_from_camera = with_info.original_name
             comment = with_info.comment
             thumb_title = with_info.thumbnail_title
-            pixmap = with_info.pixmap
             self.with_info_dic[name_from_camera] = (comment, thumb_title)
-            pix_file = UTIL_FILES_DIR_ABS+name_from_camera+PIX_EXT
-            with open(pix_file, 'wb') as f:
-                f.write(pixmap)
-            # os.chdir(PRE_SORT_DIR_ABS)
             #---------------------------------------------------------------------------
             shutil.move(source, dest_dir)
         self.num_part_for_created_names = with_info.num_part_for_random
 
     def pictures_selection(self):
+        # TODO: next line probably useless in final because version because these dirs will move elsewhere
         dir_list = ['_REJECT', '_BIN', '_IGNORE', '_EXPORT']
         lst_temp = [filename for filename in os.listdir(TMP_DIR) if not filename in dir_list]
+        #-----------------------------------------------------------------------------------------
+        # TODO: move the following to a function
+        lst_temp_tmp = lst_temp #temporary list of files of CARD_DIR/tmp
+        for filename in lst_temp:
+            if BLURRED in filename:
+                lst_temp_tmp.remove(filename)                   # remove blurred from tmp_tmp
+                filename = filename.replace(BLURRED, '')
+                base, _ = os.path.splitext(filename)            # base = name less blurred
+                for filename_tmp in lst_temp_tmp:
+                    if base in filename_tmp:
+                        if base+REJECT_EXT in lst_temp_tmp:
+                            lst_temp_tmp.remove(base+REJECT_EXT) # if rejected also remove JPG and
+                            lst_temp_tmp.remove(base+JPG_EXT)    # REJECT files
+
+        lst_temp = lst_temp_tmp
+        #-----------------------------------------------------------------------------------------
         lst_temp.sort()
         for filename in lst_temp:
             root, ext = os.path.splitext(filename)
@@ -199,29 +222,31 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     os.remove(TMP_DIR+filename)
                 case '.JPG':
                     os.chdir(TEMP_DIR_ABS)
-                    self.move_file(root, BIN_DIR, ext)
+                    # TODO: don't move IGNORE and REJECT (blurred) files
+                    self.move_file(root, JPG_FOR_RENAME_CLI_DIR_ABS, ext)
                 case '_':
                     print('C\'est quoi ce fichier : ', root+ext) # TODO: change in final: warning to console
                     self.move_file(root, BIN_DIR, ext)
 
     def move_file(self, root, dest_dir, go_to):
-
         if go_to == JPG_EXT:
             file_to_move = root+go_to
         else:
             file_to_move = self.find_file_in_list_orig(root)
-            base, ext_ = os.path.splitext(file_to_move)
-            file_to_move = basename(base)+ext_
+            # base, ext_ = os.path.splitext(file_to_move)
+            # file_to_move = basename(base)+ext_
+            # print('beftm', base, ext_, file_to_move)
 
         to_tmp = dest_dir+file_to_move
         try:
             with open(file_to_move, 'rb') as f:
-                img = f.read()
-            os.remove(file_to_move)
+                img = f.read()  # store file to move
+            os.remove(file_to_move) # erase it
         except:
-            print('MOVE FILE PROBLEM ------------>', file_to_move, to_tmp, os.getcwd())
+            print('MOVE FILE PROBLEM ------------>', file_to_move, to_tmp, os.getcwd()) #TODO: to console
+            return
         with open(to_tmp, 'wb') as f:
-            f.write(img)
+            f.write(img)    # write img in new location
         return
 
     def find_file_in_list_orig(self, root):
@@ -400,6 +425,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         sorted_tmp_dict = dict(sorted(tmp_dict.items()))    # sort dict as a function of key (i.e. datetime)
         self.pictures_in_tmp = [val for val in sorted_tmp_dict.values()] # transfer datetime sorted values to
+
+    @staticmethod
+    def do_cleaning():
+        """Completely removes CARD, PRE_SORT and JPG_FOR_RENAME_CLI directories and recreates them empty"""
+        print(os.getcwd())
+        shutil.rmtree(CARD_DIR)
+        os.makedirs(TEMP_DIR_ABS)   # creates CARD dir and TMP dir within CARD
+        shutil.rmtree(PRE_SORT_DIR_ABS)
+        os.makedirs(PRE_SORT_DIR_ABS)   # creates empty PRE_SORTED dir
+        shutil.rmtree(JPG_FOR_RENAME_CLI_DIR_ABS)    # jpg files used by renommage_cli
+        os.makedirs(JPG_FOR_RENAME_CLI_DIR_ABS)
 
     @staticmethod
     def normalize_name_and_ext(file: str) -> str:
