@@ -162,26 +162,30 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             camera_name = with_info.name_from_camera.original_name
             created_camera_name = with_info.original_name
             if camera_name.startswith('XXX_'):
-                base2, ext_ = os.path.splitext(source)
-                temp = base2+'-'+created_camera_name+ext_
+                base2, ext1 = os.path.splitext(source)
+                temp = base2+'-'+created_camera_name+ext1
                 os.rename(source, temp)
                 source = temp
             #--------------------------------------------------------------------------
             decade = self.pictures_with_date_and_selection[key][1][0]
             day = self.pictures_with_date_and_selection[key][1][1]
             modifier = self.pictures_with_date_and_selection[key][1][2]
+            date = self.pictures_with_date_and_selection[key][0]
+            date = date.replace(' ', '-')
             day = day+modifier
             dest_dir = os.path.join(decade, day)
             os.makedirs(dest_dir,0o755, True)
             #---------------------------------------------------------------------------
-            # TODO: see whether this is the best place to do this
+            # TODO: see whether this is the best place to create with_info dict
             #  while files are in export dir, create a dic for later use renommage_cli
             name_from_camera = with_info.original_name
             comment = with_info.comment
             thumb_title = with_info.thumbnail_title
-            self.with_info_dic[name_from_camera] = (comment, thumb_title)
+            self.with_info_dic[name_from_camera] = (comment, date, decade, day)
             #---------------------------------------------------------------------------
-            shutil.move(source, dest_dir)
+            _, ext2 = os.path.splitext(source)
+            new_name = name_from_camera+ext2
+            shutil.move(source, dest_dir+'/'+new_name)
         self.num_part_for_created_names = with_info.num_part_for_random
 
     def pictures_selection(self):
@@ -229,14 +233,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     self.move_file(root, BIN_DIR, ext)
 
     def move_file(self, root, dest_dir, go_to):
-        if go_to == JPG_EXT:
-            file_to_move = root+go_to
-        else:
-            file_to_move = self.find_file_in_list_orig(root)
-            # base, ext_ = os.path.splitext(file_to_move)
-            # file_to_move = basename(base)+ext_
-            # print('beftm', base, ext_, file_to_move)
-
+        file_to_move = root+go_to if go_to == JPG_EXT else self.find_file_in_list_orig(root)
         to_tmp = dest_dir+file_to_move
         try:
             with open(file_to_move, 'rb') as f:
